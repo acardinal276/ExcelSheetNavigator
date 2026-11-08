@@ -15,138 +15,155 @@
 
 <div class="app">
 
-  <!-- HEADER -->
-  <header class="app-header">
+  <!-- COLLAPSE TOGGLE -->
+  <button
+    id="collapseToggle"
+    class="collapse-toggle"
+    title="Collapse navigator"
+    aria-label="Collapse navigator">
+    ‹
+  </button>
 
-    <div>
-      <h1>Sheet Navigator</h1>
-      <p id="status">Connecting to Excel...</p>
+
+  <div id="navigatorContent" class="navigator-content">
+
+    <!-- HEADER -->
+    <header class="app-header">
+
+      <div>
+        <h1>Sheet Navigator</h1>
+        <p id="status">Connecting to Excel...</p>
+      </div>
+
+      <button
+        id="refresh"
+        class="header-button"
+        title="Refresh worksheets"
+        aria-label="Refresh worksheets">
+        ↻
+      </button>
+
+    </header>
+
+
+    <!-- SEARCH / FILTERS -->
+    <section class="controls">
+
+      <input
+        id="search"
+        class="search-box"
+        type="search"
+        placeholder="Search worksheets..."
+        aria-label="Search worksheets">
+
+      <div class="control-row">
+
+        <select
+          id="statusFilter"
+          aria-label="Filter worksheets by workflow status">
+
+          <option value="all">
+            All Statuses
+          </option>
+
+          <option value="prepared">
+            Prepared
+          </option>
+
+          <option value="reviewed">
+            Reviewed
+          </option>
+
+          <option value="openItems">
+            Open Items
+          </option>
+
+          <option value="signerReview">
+            Signer Review
+          </option>
+
+          <option value="none">
+            No Status
+          </option>
+
+          <option value="changed">
+            Changed After Review
+          </option>
+
+        </select>
+
+
+        <label class="hidden-option">
+
+          <input
+            id="showHidden"
+            type="checkbox">
+
+          Hidden
+
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <!-- LIST HEADER -->
+    <div class="sheet-header">
+
+      <span></span>
+
+      <span class="sheet-header-name">
+        Worksheets
+        <span id="count"></span>
+      </span>
+
+      <span class="sheet-header-status">
+        Status
+      </span>
+
+      <span></span>
+
     </div>
 
-    <button
-      id="refresh"
-      class="header-button"
-      title="Refresh worksheets"
-      aria-label="Refresh worksheets">
-      ↻
-    </button>
 
-  </header>
+    <!-- SCROLLABLE SHEET LIST -->
+    <main
+      id="sheetContainer"
+      class="sheet-container">
 
+      <ul id="sheetList"></ul>
 
-  <!-- CONTROLS -->
-  <section class="controls">
+      <div
+        id="empty"
+        class="empty-message"
+        hidden>
+        No matching worksheets
+      </div>
 
-    <input
-      id="search"
-      class="search-box"
-      type="search"
-      placeholder="Search worksheets..."
-      aria-label="Search worksheets">
-
-    <div class="control-row">
-
-      <label>
-        <input
-          id="showHidden"
-          type="checkbox">
-        Hidden
-      </label>
-
-      <select
-        id="statusFilter"
-        aria-label="Filter by sign-off status">
-
-        <option value="all">
-          All sheets
-        </option>
-
-        <option value="notPrepared">
-          Not prepared
-        </option>
-
-        <option value="awaitingReview">
-          Awaiting review
-        </option>
-
-        <option value="awaitingSigner">
-          Awaiting signer
-        </option>
-
-        <option value="complete">
-          Complete
-        </option>
-
-      </select>
-
-    </div>
-
-  </section>
+    </main>
 
 
-  <!-- COLUMN HEADER -->
-  <div class="sheet-header">
+    <!-- FOOTER -->
+    <footer>
 
-    <span class="drag-column"></span>
+      <span>
+        ■ Excel tab color
+      </span>
 
-    <span class="sheet-column">
-      Worksheets
-      <span id="count"></span>
-    </span>
+      <span>
+        ⚠ Changed after review
+      </span>
 
-    <span class="sign-column">P</span>
-    <span class="sign-column">R</span>
-    <span class="sign-column">S</span>
-
-    <span class="menu-column"></span>
+    </footer>
 
   </div>
-
-
-  <!-- SCROLLABLE SHEET AREA -->
-  <main
-    id="sheetContainer"
-    class="sheet-container">
-
-    <ul id="sheetList"></ul>
-
-    <div
-      id="empty"
-      class="empty-message"
-      hidden>
-
-      No matching worksheets
-
-    </div>
-
-  </main>
-
-
-  <!-- LEGEND -->
-  <footer>
-
-    <div class="legend">
-
-      <span>
-        <strong>P</strong> Prepared
-      </span>
-
-      <span>
-        <strong>R</strong> Reviewed
-      </span>
-
-      <span>
-        <strong>S</strong> Signer
-      </span>
-
-    </div>
-
-  </footer>
 
 </div>
 
 
-<!-- SHEET ACTION MENU -->
+
+<!-- RIGHT CLICK MENU -->
 <div
   id="sheetMenu"
   class="sheet-menu"
@@ -156,22 +173,95 @@
     Open
   </button>
 
-  <button data-action="rename">
-    Rename
+  <div class="menu-separator"></div>
+
+  <button data-action="insert">
+    Insert Sheet
   </button>
 
-  <button data-action="color">
-    Tab color
+  <button data-action="duplicate">
+    Duplicate Sheet
+  </button>
+
+  <button
+    data-action="delete"
+    class="danger-action">
+    Delete Sheet
+  </button>
+
+  <div class="menu-separator"></div>
+
+  <button data-action="rename">
+    Rename Sheet
   </button>
 
   <button data-action="visibility">
-    Hide
+    Hide Sheet
+  </button>
+
+  <div class="menu-separator"></div>
+
+  <button data-action="color">
+    Tab Color ›
+  </button>
+
+  <div class="menu-separator"></div>
+
+  <div class="menu-heading">
+    Workflow Status
+  </div>
+
+  <button
+    data-action="workflow"
+    data-status="prepared">
+
+    <span class="menu-dot prepared"></span>
+    Mark as Prepared
+  </button>
+
+  <button
+    data-action="workflow"
+    data-status="reviewed">
+
+    <span class="menu-dot reviewed"></span>
+    Mark as Reviewed
+  </button>
+
+  <button
+    data-action="workflow"
+    data-status="openItems">
+
+    <span class="menu-dot open-items"></span>
+    Mark as Open Items
+  </button>
+
+  <button
+    data-action="workflow"
+    data-status="signerReview">
+
+    <span class="menu-dot signer-review"></span>
+    Mark as Signer Review
+  </button>
+
+  <button
+    data-action="workflow"
+    data-status="none">
+
+    <span class="menu-dot no-status"></span>
+    Clear Status
+  </button>
+
+  <div class="menu-separator"></div>
+
+  <button data-action="history">
+    View Change History
   </button>
 
 </div>
 
 
-<!-- COLOR PICKER -->
+
+<!-- TAB COLOR MENU -->
 <div
   id="colorMenu"
   class="color-menu"
@@ -221,6 +311,73 @@
   </button>
 
 </div>
+
+
+
+<!-- CHANGE HISTORY DIALOG -->
+<div
+  id="historyOverlay"
+  class="history-overlay"
+  hidden>
+
+  <section
+    class="history-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="historyTitle">
+
+    <header class="history-header">
+
+      <div>
+
+        <h2 id="historyTitle">
+          Change History
+        </h2>
+
+        <p id="historySheetName"></p>
+
+      </div>
+
+      <button
+        id="closeHistory"
+        class="close-history"
+        aria-label="Close change history">
+        ×
+      </button>
+
+    </header>
+
+
+    <div
+      id="historyReviewInfo"
+      class="history-review-info">
+    </div>
+
+
+    <div class="history-section-header">
+      Changes since last review
+    </div>
+
+
+    <div
+      id="historyList"
+      class="history-list">
+    </div>
+
+
+    <div
+      id="historyEmpty"
+      class="history-empty"
+      hidden>
+
+      No changes recorded since the last review.
+
+    </div>
+
+  </section>
+
+</div>
+
 
 
 <script src="taskpane.js"></script>

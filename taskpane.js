@@ -1,10 +1,27 @@
 /* global Office, Excel */
 
+const KEYS = {
+  status: "SheetNavigator.Status",
+  statusBy: "SheetNavigator.StatusBy",
+  statusAt: "SheetNavigator.StatusAt",
+  changed: "SheetNavigator.ChangedAfterReview",
+  history: "SheetNavigator.ChangeHistory"
+};
+
+const STATUS_LABELS = {
+  none: "",
+  prepared: "Prepared",
+  reviewed: "Reviewed",
+  openItems: "Open Items",
+  signerReview: "Signer Review"
+};
+
 let sheetCache = [];
 let activeSheetId = null;
 let selectedSheetId = null;
 let draggedSheetId = null;
 let handlersRegistered = false;
+let collapsed = false;
 
 Office.onReady((info) => {
   if (info.host !== Office.HostType.Excel) {
@@ -18,13 +35,27 @@ Office.onReady((info) => {
   document.getElementById("search")
     .addEventListener("input", renderSheets);
 
-  document.getElementById("showHidden")
-    .addEventListener("change", renderSheets);
-
   document.getElementById("statusFilter")
     .addEventListener("change", renderSheets);
 
+  document.getElementById("showHidden")
+    .addEventListener("change", renderSheets);
+
+  document.getElementById("collapseToggle")
+    .addEventListener("click", toggleCollapsed);
+
+  document.getElementById("closeHistory")
+    .addEventListener("click", closeHistory);
+
+  document.getElementById("historyOverlay")
+    .addEventListener("click", (event) => {
+      if (event.target.id === "historyOverlay") {
+        closeHistory();
+      }
+    });
+
   document.addEventListener("click", handleOutsideClick);
+  document.addEventListener("keydown", handleKeyboard);
 
   setupMenuActions();
   setupColorMenu();
@@ -33,12 +64,15 @@ Office.onReady((info) => {
 });
 
 
+/* =========================================================
+   LOAD WORKSHEETS AND METADATA
+   ========================================================= */
+
 async function loadSheets() {
   setStatus("Loading...");
 
   try {
     await Excel.run(async (context) => {
-
       const sheets = context.workbook.worksheets;
       const activeSheet = sheets.getActiveWorksheet();
 
@@ -51,15 +85,13 @@ async function loadSheets() {
 
       await context.sync();
 
-      const loadedSheets = [];
+      const loaded = [];
 
       for (const sheet of sheets.items) {
-
         const props = sheet.customProperties;
-
         props.load("items/key,items/value");
 
-        loadedSheets.push({
+        loaded.push({
           sheet,
           props
         });
@@ -67,12 +99,11 @@ async function loadSheets() {
 
       await context.sync();
 
-      sheetCache = loadedSheets.map(({ sheet, props }) => {
-
+      sheetCache = loaded.map(({ sheet, props }) => {
         const metadata = {};
 
-        for (const prop of props.items) {
-          metadata[prop.key] = prop.value;
+        for (const property of props.items) {
+          metadata[property.key] = property.value;
         }
 
         return {
@@ -82,99 +113,44 @@ async function loadSheets() {
           tabColor: sheet.tabColor || "",
           position: sheet.position,
 
-          preparedBy:
-            metadata["SheetNavigator.PreparedBy"] || "",
+          workflowStatus:
+            metadata[KEYS.status] || "none",
 
-          preparedAt:
-            metadata["SheetNavigator.PreparedAt"] || "",
+          statusBy:
+            metadata[KEYS.statusBy] || "",
 
-          reviewedBy:
-            metadata["SheetNavigator.ReviewedBy"] || "",
+          statusAt:
+            metadata[KEYS.statusAt] || "",
 
-          reviewedAt:
-            metadata["SheetNavigator.ReviewedAt"] || "",
+          changedAfterReview:
+            metadata[KEYS.changed] === "true",
 
-          signedBy:
-            metadata["SheetNavigator.SignedBy"] || "",
-
-          signedAt:
-            metadata["SheetNavigator.SignedAt"] || ""
+          changeHistory:
+            parseHistory(metadata[KEYS.history])
         };
       });
 
       sheetCache.sort(
-        (a, b) => a.position - b.position
+        (left, right) =>
+          left.position - right.position
       );
 
       activeSheetId = activeSheet.id;
 
       if (!handlersRegistered) {
-
-        sheets.onActivated.add(
-          onWorksheetActivated
-        );
-
-        sheets.onAdded.add(
-          loadSheets
-        );
-
-        sheets.onDeleted.add(
-          loadSheets
-        );
+        sheets.onActivated.add(onWorksheetActivated);
+        sheets.onAdded.add(loadSheets);
+        sheets.onDeleted.add(loadSheets);
+        sheets.onChanged.add(onWorksheetChanged);
 
         handlersRegistered = true;
 
         await context.sync();
       }
-
     });
 
     setStatus("Ready");
-
     renderSheets();
-
-    scrollActiveIntoView();
-
-  } catch (error) {
-    console.error(error);
-
-    setStatus(
-      error.message || "Unable to load worksheets.",
-      true
-    );
-  }
-}
-
-
-function onWorksheetActivated(event) {
-
-  activeSheetId = event.worksheetId;
-
-  renderSheets();
-
-  scrollActiveIntoView();
-}
-
-
-async function activateSheet(sheetId) {
-
-  try {
-
-    await Excel.run(async (context) => {
-
-      const sheet =
-        context.workbook.worksheets.getItem(sheetId);
-
-      sheet.activate();
-
-      await context.sync();
-
-    });
-
-    activeSheetId = sheetId;
-
-    renderSheets();
-
     scrollActiveIntoView();
 
   } catch (error) {
@@ -183,477 +159,638 @@ async function activateSheet(sheetId) {
 }
 
 
-function renderSheets() {
+function parseHistory(value) {
+  if (!value) {
+    return [];
+  }
 
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+
+/* =========================================================
+   WORKSHEET EVENTS
+   ========================================================= */
+
+function onWorksheetActivated(event) {
+  activeSheetId = event.worksheetId;
+
+  renderSheets();
+  scrollActiveIntoView();
+}
+
+
+async function onWorksheetChanged(event) {
+  const sheet = sheetCache.find(
+    item => item.id === event.worksheetId
+  );
+
+  if (!sheet) {
+    return;
+  }
+
+  /*
+   * Prepared, Open Items, and No Status are intentionally
+   * unaffected by later edits.
+   */
+  if (
+    sheet.workflowStatus !== "reviewed" &&
+    sheet.workflowStatus !== "signerReview"
+  ) {
+    return;
+  }
+
+  /*
+   * Worksheet.onChanged captures edits to worksheet data.
+   * Formula recalculation is not handled here. We do not
+   * subscribe to onCalculated, so linked-formula result
+   * changes do not create warnings.
+   */
+  const historyItem = buildHistoryItem(event);
+
+  const newHistory = [
+    historyItem,
+    ...sheet.changeHistory
+  ].slice(0, 100);
+
+  try {
+    await Excel.run(async (context) => {
+      const worksheet =
+        context.workbook.worksheets
+          .getItem(event.worksheetId);
+
+      await setCustomProperty(
+        context,
+        worksheet,
+        KEYS.changed,
+        "true"
+      );
+
+      await setCustomProperty(
+        context,
+        worksheet,
+        KEYS.history,
+        JSON.stringify(newHistory)
+      );
+
+      await context.sync();
+    });
+
+    sheet.changedAfterReview = true;
+    sheet.changeHistory = newHistory;
+
+    renderSheets();
+
+  } catch (error) {
+    console.error(
+      "Could not record worksheet change:",
+      error
+    );
+  }
+}
+
+
+function buildHistoryItem(event) {
+  const item = {
+    timestamp: new Date().toISOString(),
+    address: event.address || "Unknown range",
+    changeType:
+      String(event.changeType || "Range edited"),
+    before: "",
+    after: ""
+  };
+
+  /*
+   * Detailed old/new information is generally available
+   * only for single-cell changes.
+   */
+  if (event.details) {
+    item.before =
+      formatChangeValue(
+        event.details.valueBefore
+      );
+
+    item.after =
+      formatChangeValue(
+        event.details.valueAfter
+      );
+  }
+
+  return item;
+}
+
+
+function formatChangeValue(value) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+
+function renderSheets() {
   const searchText =
     document.getElementById("search")
       .value
       .trim()
       .toLowerCase();
 
-  const showHidden =
-    document.getElementById("showHidden")
-      .checked;
-
   const statusFilter =
     document.getElementById("statusFilter")
       .value;
 
+  const showHidden =
+    document.getElementById("showHidden")
+      .checked;
 
-  const filteredSheets =
-    sheetCache.filter((sheet) => {
+  const filtered = sheetCache.filter((sheet) => {
+    const matchesName =
+      sheet.name.toLowerCase()
+        .includes(searchText);
 
-      const matchesSearch =
-        sheet.name
-          .toLowerCase()
-          .includes(searchText);
+    const matchesVisibility =
+      showHidden ||
+      sheet.visibility === "Visible";
 
-      const matchesVisibility =
-        showHidden ||
-        sheet.visibility === "Visible";
+    const matchesStatus =
+      statusMatches(sheet, statusFilter);
 
-      const matchesStatus =
-        statusMatches(
-          sheet,
-          statusFilter
-        );
-
-      return (
-        matchesSearch &&
-        matchesVisibility &&
-        matchesStatus
-      );
-    });
-
+    return (
+      matchesName &&
+      matchesVisibility &&
+      matchesStatus
+    );
+  });
 
   const list =
     document.getElementById("sheetList");
 
   list.replaceChildren();
 
-
-  for (const sheet of filteredSheets) {
-
-    const li =
-      document.createElement("li");
-
-    const row =
-      document.createElement("div");
-
-    row.className = "sheet-row";
-
-    row.dataset.sheetId = sheet.id;
-
-    row.draggable = true;
-
-
-    if (sheet.id === activeSheetId) {
-      row.classList.add("active");
-    }
-
-
-    if (sheet.visibility !== "Visible") {
-      row.classList.add("hidden-sheet");
-    }
-
-
-    /* DRAG HANDLE */
-
-    const dragHandle =
-      document.createElement("span");
-
-    dragHandle.className =
-      "drag-handle";
-
-    dragHandle.textContent =
-      "⋮⋮";
-
-    dragHandle.title =
-      "Drag to reorder";
-
-
-    /* SHEET NAME BUTTON */
-
-    const sheetButton =
-      document.createElement("button");
-
-    sheetButton.className =
-      "sheet-button";
-
-    sheetButton.title =
-      sheet.name;
-
-    sheetButton.addEventListener(
-      "click",
-      () => activateSheet(sheet.id)
+  for (const sheet of filtered) {
+    list.append(
+      createSheetRow(sheet)
     );
-
-
-    const tabColor =
-      document.createElement("span");
-
-    tabColor.className =
-      "tab-color";
-
-    tabColor.style.background =
-      sheet.tabColor || "#c8c6c4";
-
-
-    const sheetName =
-      document.createElement("span");
-
-    sheetName.className =
-      "sheet-name";
-
-    sheetName.textContent =
-      sheet.name;
-
-
-    sheetButton.append(
-      tabColor,
-      sheetName
-    );
-
-
-    if (sheet.visibility !== "Visible") {
-
-      const hidden =
-        document.createElement("span");
-
-      hidden.className =
-        "hidden-label";
-
-      hidden.textContent =
-        "H";
-
-      sheetButton.append(hidden);
-    }
-
-
-    /* SIGN-OFFS */
-
-    const prepare =
-      createSignoffButton(
-        sheet,
-        "prepared"
-      );
-
-    const review =
-      createSignoffButton(
-        sheet,
-        "reviewed"
-      );
-
-    const signer =
-      createSignoffButton(
-        sheet,
-        "signed"
-      );
-
-
-    /* MORE MENU */
-
-    const more =
-      document.createElement("button");
-
-    more.className =
-      "more-button";
-
-    more.textContent =
-      "⋯";
-
-    more.title =
-      "Worksheet actions";
-
-    more.addEventListener(
-      "click",
-      (event) => {
-
-        event.stopPropagation();
-
-        openSheetMenu(
-          event.currentTarget,
-          sheet.id
-        );
-      }
-    );
-
-
-    row.append(
-      dragHandle,
-      sheetButton,
-      prepare,
-      review,
-      signer,
-      more
-    );
-
-
-    /* DRAG EVENTS */
-
-    row.addEventListener(
-      "dragstart",
-      handleDragStart
-    );
-
-    row.addEventListener(
-      "dragover",
-      handleDragOver
-    );
-
-    row.addEventListener(
-      "dragleave",
-      handleDragLeave
-    );
-
-    row.addEventListener(
-      "drop",
-      handleDrop
-    );
-
-    row.addEventListener(
-      "dragend",
-      handleDragEnd
-    );
-
-
-    li.append(row);
-
-    list.append(li);
   }
-
 
   document.getElementById("count")
     .textContent =
-      `${filteredSheets.length}/${sheetCache.length}`;
-
+      `(${filtered.length}/${sheetCache.length})`;
 
   document.getElementById("empty")
     .hidden =
-      filteredSheets.length !== 0;
+      filtered.length !== 0;
 }
 
 
-function createSignoffButton(
-  sheet,
-  type
-) {
+function createSheetRow(sheet) {
+  const listItem =
+    document.createElement("li");
 
-  const button =
-    document.createElement("button");
+  const row =
+    document.createElement("div");
 
-  button.className =
-    "signoff";
+  row.className = "sheet-row";
+  row.dataset.sheetId = sheet.id;
+  row.draggable = true;
 
-
-  const values = {
-
-    prepared: {
-      person: sheet.preparedBy,
-      date: sheet.preparedAt,
-      label: "Prepared"
-    },
-
-    reviewed: {
-      person: sheet.reviewedBy,
-      date: sheet.reviewedAt,
-      label: "Reviewed"
-    },
-
-    signed: {
-      person: sheet.signedBy,
-      date: sheet.signedAt,
-      label: "Signed"
-    }
-
-  };
-
-
-  const data =
-    values[type];
-
-
-  if (data.person) {
-
-    button.classList.add("signed");
-
-    button.textContent =
-      "✓";
-
-    button.title =
-      `${data.label} by ${data.person}` +
-      `${data.date ? "\n" + data.date : ""}`;
-
-  } else {
-
-    button.textContent =
-      "○";
-
-    button.title =
-      `Mark ${data.label}`;
-
+  if (sheet.id === activeSheetId) {
+    row.classList.add("active");
   }
 
+  if (sheet.visibility !== "Visible") {
+    row.classList.add("hidden-sheet");
+  }
 
-  button.addEventListener(
-    "click",
-    async (event) => {
+  if (
+    sheet.workflowStatus &&
+    sheet.workflowStatus !== "none"
+  ) {
+    row.classList.add(
+      `status-${sheet.workflowStatus}`
+    );
+  }
 
-      event.stopPropagation();
+  row.addEventListener(
+    "contextmenu",
+    (event) => {
+      event.preventDefault();
 
-      await toggleSignoff(
-        sheet,
-        type
+      openSheetMenuAtPoint(
+        event.clientX,
+        event.clientY,
+        sheet.id
       );
     }
   );
 
+  row.addEventListener(
+    "dragstart",
+    handleDragStart
+  );
 
-  return button;
+  row.addEventListener(
+    "dragover",
+    handleDragOver
+  );
+
+  row.addEventListener(
+    "dragleave",
+    handleDragLeave
+  );
+
+  row.addEventListener(
+    "drop",
+    handleDrop
+  );
+
+  row.addEventListener(
+    "dragend",
+    handleDragEnd
+  );
+
+
+  const dragHandle =
+    document.createElement("span");
+
+  dragHandle.className = "drag-handle";
+  dragHandle.textContent = "⋮⋮";
+  dragHandle.title = "Drag to reorder";
+
+
+  const sheetButton =
+    document.createElement("button");
+
+  sheetButton.className = "sheet-button";
+  sheetButton.title = sheet.name;
+
+  sheetButton.addEventListener(
+    "click",
+    () => activateSheet(sheet.id)
+  );
+
+  sheetButton.addEventListener(
+    "dblclick",
+    (event) => {
+      event.stopPropagation();
+      renameSheet(sheet);
+    }
+  );
+
+
+  const tabColor =
+    document.createElement("span");
+
+  tabColor.className = "tab-color";
+
+  /*
+   * This is the worksheet's actual Excel tab color.
+   */
+  tabColor.style.background =
+    sheet.tabColor || "#c8c6c4";
+
+
+  const sheetName =
+    document.createElement("span");
+
+  sheetName.className = "sheet-name";
+  sheetName.textContent = sheet.name;
+
+  sheetButton.append(
+    tabColor,
+    sheetName
+  );
+
+  if (sheet.visibility !== "Visible") {
+    const hidden =
+      document.createElement("span");
+
+    hidden.className = "hidden-label";
+    hidden.textContent = "Hidden";
+
+    sheetButton.append(hidden);
+  }
+
+
+  const workflow =
+    document.createElement("span");
+
+  workflow.className =
+    "workflow-label";
+
+  workflow.textContent =
+    STATUS_LABELS[
+      sheet.workflowStatus
+    ] || "";
+
+
+  const warning =
+    document.createElement("button");
+
+  warning.className =
+    "change-warning";
+
+  if (sheet.changedAfterReview) {
+    warning.textContent = "⚠";
+    warning.title =
+      "Changed after review. Click to view history.";
+
+    warning.addEventListener(
+      "click",
+      (event) => {
+        event.stopPropagation();
+        openHistory(sheet);
+      }
+    );
+  } else {
+    warning.classList.add("empty");
+    warning.textContent = "⚠";
+  }
+
+  row.append(
+    dragHandle,
+    sheetButton,
+    workflow,
+    warning
+  );
+
+  listItem.append(row);
+
+  return listItem;
 }
 
 
-async function toggleSignoff(
+function statusMatches(
   sheet,
-  type
+  filter
 ) {
+  if (filter === "all") {
+    return true;
+  }
 
-  const mapping = {
+  if (filter === "changed") {
+    return sheet.changedAfterReview;
+  }
 
-    prepared: {
-      by: "SheetNavigator.PreparedBy",
-      at: "SheetNavigator.PreparedAt",
-      current: sheet.preparedBy
-    },
+  if (filter === "none") {
+    return (
+      !sheet.workflowStatus ||
+      sheet.workflowStatus === "none"
+    );
+  }
 
-    reviewed: {
-      by: "SheetNavigator.ReviewedBy",
-      at: "SheetNavigator.ReviewedAt",
-      current: sheet.reviewedBy
-    },
-
-    signed: {
-      by: "SheetNavigator.SignedBy",
-      at: "SheetNavigator.SignedAt",
-      current: sheet.signedBy
-    }
-
-  };
+  return sheet.workflowStatus === filter;
+}
 
 
-  const config =
-    mapping[type];
+/* =========================================================
+   ACTIVATE AND COMPACT MODE
+   ========================================================= */
 
+async function activateSheet(sheetId) {
+  try {
+    await Excel.run(async (context) => {
+      const sheet =
+        context.workbook.worksheets
+          .getItem(sheetId);
+
+      sheet.activate();
+
+      await context.sync();
+    });
+
+    activeSheetId = sheetId;
+
+    renderSheets();
+    scrollActiveIntoView();
+
+  } catch (error) {
+    showError(error);
+  }
+}
+
+
+function toggleCollapsed() {
+  collapsed = !collapsed;
+
+  const app =
+    document.querySelector(".app");
+
+  const button =
+    document.getElementById(
+      "collapseToggle"
+    );
+
+  app.classList.toggle(
+    "collapsed",
+    collapsed
+  );
+
+  button.textContent =
+    collapsed ? "›" : "‹";
+
+  button.title =
+    collapsed
+      ? "Expand navigator"
+      : "Collapse navigator";
+
+  setStatus(
+    collapsed ? "Collapsed" : "Ready"
+  );
+}
+
+
+/* =========================================================
+   RIGHT-CLICK MENU
+   ========================================================= */
+
+function openSheetMenuAtPoint(
+  x,
+  y,
+  sheetId
+) {
+  selectedSheetId = sheetId;
+
+  const menu =
+    document.getElementById("sheetMenu");
+
+  const sheet =
+    getSelectedSheet();
+
+  if (!sheet) {
+    return;
+  }
+
+  const visibilityButton =
+    menu.querySelector(
+      '[data-action="visibility"]'
+    );
+
+  visibilityButton.textContent =
+    sheet.visibility === "Visible"
+      ? "Hide Sheet"
+      : "Unhide Sheet";
+
+  menu.hidden = false;
+
+  const menuWidth = 190;
+  const menuHeight =
+    Math.min(menu.offsetHeight, 520);
+
+  menu.style.left =
+    `${Math.min(
+      x,
+      window.innerWidth - menuWidth - 5
+    )}px`;
+
+  menu.style.top =
+    `${Math.min(
+      y,
+      window.innerHeight - menuHeight - 5
+    )}px`;
+
+  document.getElementById(
+    "colorMenu"
+  ).hidden = true;
+}
+
+
+function setupMenuActions() {
+  document.querySelectorAll(
+    "#sheetMenu button"
+  ).forEach((button) => {
+    button.addEventListener(
+      "click",
+      async (event) => {
+        event.stopPropagation();
+
+        const action =
+          button.dataset.action;
+
+        const sheet =
+          getSelectedSheet();
+
+        if (!sheet) {
+          return;
+        }
+
+        if (action === "color") {
+          openColorMenu();
+          return;
+        }
+
+        closeMenus();
+
+        switch (action) {
+          case "activate":
+            await activateSheet(sheet.id);
+            break;
+
+          case "insert":
+            await insertSheet(sheet);
+            break;
+
+          case "duplicate":
+            await duplicateSheet(sheet);
+            break;
+
+          case "delete":
+            await deleteSheet(sheet);
+            break;
+
+          case "rename":
+            await renameSheet(sheet);
+            break;
+
+          case "visibility":
+            await toggleVisibility(sheet);
+            break;
+
+          case "workflow":
+            await setWorkflowStatus(
+              sheet,
+              button.dataset.status
+            );
+            break;
+
+          case "history":
+            openHistory(sheet);
+            break;
+        }
+      }
+    );
+  });
+}
+
+
+function getSelectedSheet() {
+  return sheetCache.find(
+    sheet =>
+      sheet.id === selectedSheetId
+  );
+}
+
+
+/* =========================================================
+   SHEET OPERATIONS
+   ========================================================= */
+
+async function insertSheet(relativeSheet) {
+  const proposedName =
+    window.prompt(
+      "New worksheet name:",
+      "New Sheet"
+    );
+
+  if (proposedName === null) {
+    return;
+  }
 
   try {
+    await Excel.run(async (context) => {
+      const sheets =
+        context.workbook.worksheets;
 
-    if (config.current) {
+      const relative =
+        sheets.getItem(relativeSheet.id);
 
-      const remove =
-        window.confirm(
-          "Remove this sign-off?"
-        );
+      relative.load("position");
 
-      if (!remove) {
-        return;
-      }
+      await context.sync();
 
-      await Excel.run(
-        async (context) => {
+      const added =
+        proposedName.trim()
+          ? sheets.add(proposedName.trim())
+          : sheets.add();
 
-          const worksheet =
-            context.workbook
-              .worksheets
-              .getItem(sheet.id);
+      added.position =
+        relative.position + 1;
 
-          const properties =
-            worksheet.customProperties;
+      added.activate();
 
-          const byProperty =
-            properties
-              .getItemOrNullObject(
-                config.by
-              );
-
-          const atProperty =
-            properties
-              .getItemOrNullObject(
-                config.at
-              );
-
-          byProperty.load(
-            "isNullObject"
-          );
-
-          atProperty.load(
-            "isNullObject"
-          );
-
-          await context.sync();
-
-          if (!byProperty.isNullObject) {
-            byProperty.delete();
-          }
-
-          if (!atProperty.isNullObject) {
-            atProperty.delete();
-          }
-
-          await context.sync();
-        }
-      );
-
-    } else {
-
-      let initials =
-        window.prompt(
-          "Enter your initials:"
-        );
-
-      if (!initials) {
-        return;
-      }
-
-      initials =
-        initials
-          .trim()
-          .toUpperCase();
-
-      if (!initials) {
-        return;
-      }
-
-      const timestamp =
-        new Date()
-          .toLocaleString();
-
-
-      await Excel.run(
-        async (context) => {
-
-          const worksheet =
-            context.workbook
-              .worksheets
-              .getItem(sheet.id);
-
-          worksheet
-            .customProperties
-            .add(
-              config.by,
-              initials
-            );
-
-          worksheet
-            .customProperties
-            .add(
-              config.at,
-              timestamp
-            );
-
-          await context.sync();
-        }
-      );
-    }
+      await context.sync();
+    });
 
     await loadSheets();
 
@@ -663,50 +800,359 @@ async function toggleSignoff(
 }
 
 
-/* FILTERING */
+async function duplicateSheet(sheet) {
+  try {
+    await Excel.run(async (context) => {
+      const worksheet =
+        context.workbook.worksheets
+          .getItem(sheet.id);
 
-function statusMatches(
-  sheet,
-  filter
-) {
+      const copy =
+        worksheet.copy(
+          Excel.WorksheetPositionType.after,
+          worksheet
+        );
 
-  switch (filter) {
+      copy.activate();
 
-    case "notPrepared":
-      return !sheet.preparedBy;
+      await context.sync();
+    });
 
-    case "awaitingReview":
-      return (
-        !!sheet.preparedBy &&
-        !sheet.reviewedBy
-      );
+    await loadSheets();
 
-    case "awaitingSigner":
-      return (
-        !!sheet.reviewedBy &&
-        !sheet.signedBy
-      );
-
-    case "complete":
-      return (
-        !!sheet.preparedBy &&
-        !!sheet.reviewedBy &&
-        !!sheet.signedBy
-      );
-
-    default:
-      return true;
+  } catch (error) {
+    showError(error);
   }
 }
 
 
-/* DRAG / DROP */
+async function deleteSheet(sheet) {
+  if (sheetCache.length <= 1) {
+    window.alert(
+      "Excel must contain at least one worksheet."
+    );
+    return;
+  }
+
+  const confirmed =
+    window.confirm(
+      `Delete worksheet "${sheet.name}"?\n\n` +
+      "This action may not be reversible."
+    );
+
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    await Excel.run(async (context) => {
+      context.workbook.worksheets
+        .getItem(sheet.id)
+        .delete();
+
+      await context.sync();
+    });
+
+    await loadSheets();
+
+  } catch (error) {
+    showError(error);
+  }
+}
+
+
+async function renameSheet(sheet) {
+  const newName =
+    window.prompt(
+      "Worksheet name:",
+      sheet.name
+    );
+
+  if (newName === null) {
+    return;
+  }
+
+  const cleaned =
+    newName.trim();
+
+  if (!cleaned) {
+    return;
+  }
+
+  try {
+    await Excel.run(async (context) => {
+      const worksheet =
+        context.workbook.worksheets
+          .getItem(sheet.id);
+
+      worksheet.name = cleaned;
+
+      await context.sync();
+    });
+
+    await loadSheets();
+
+  } catch (error) {
+    showError(error);
+  }
+}
+
+
+async function toggleVisibility(sheet) {
+  const visibleCount =
+    sheetCache.filter(
+      item =>
+        item.visibility === "Visible"
+    ).length;
+
+  if (
+    sheet.visibility === "Visible" &&
+    visibleCount <= 1
+  ) {
+    window.alert(
+      "Excel must have at least one visible worksheet."
+    );
+    return;
+  }
+
+  try {
+    await Excel.run(async (context) => {
+      const worksheet =
+        context.workbook.worksheets
+          .getItem(sheet.id);
+
+      worksheet.visibility =
+        sheet.visibility === "Visible"
+          ? "Hidden"
+          : "Visible";
+
+      await context.sync();
+    });
+
+    await loadSheets();
+
+  } catch (error) {
+    showError(error);
+  }
+}
+
+
+/* =========================================================
+   WORKFLOW STATUS
+   ========================================================= */
+
+async function setWorkflowStatus(
+  sheet,
+  workflowStatus
+) {
+  let initials = "";
+
+  if (workflowStatus !== "none") {
+    initials =
+      window.prompt(
+        `Enter initials for ${
+          STATUS_LABELS[workflowStatus]
+        }:`,
+        sheet.statusBy || ""
+      );
+
+    if (initials === null) {
+      return;
+    }
+
+    initials =
+      initials.trim().toUpperCase();
+
+    if (!initials) {
+      return;
+    }
+  }
+
+  const timestamp =
+    workflowStatus === "none"
+      ? ""
+      : new Date().toISOString();
+
+  try {
+    await Excel.run(async (context) => {
+      const worksheet =
+        context.workbook.worksheets
+          .getItem(sheet.id);
+
+      await setCustomProperty(
+        context,
+        worksheet,
+        KEYS.status,
+        workflowStatus
+      );
+
+      await setCustomProperty(
+        context,
+        worksheet,
+        KEYS.statusBy,
+        initials
+      );
+
+      await setCustomProperty(
+        context,
+        worksheet,
+        KEYS.statusAt,
+        timestamp
+      );
+
+      /*
+       * A new Reviewed or Signer Review sign-off confirms
+       * that prior outstanding changes were addressed.
+       */
+      if (
+        workflowStatus === "reviewed" ||
+        workflowStatus === "signerReview"
+      ) {
+        await setCustomProperty(
+          context,
+          worksheet,
+          KEYS.changed,
+          "false"
+        );
+
+        await setCustomProperty(
+          context,
+          worksheet,
+          KEYS.history,
+          "[]"
+        );
+      }
+
+      await context.sync();
+    });
+
+    await loadSheets();
+
+  } catch (error) {
+    showError(error);
+  }
+}
+
+
+/* =========================================================
+   CUSTOM PROPERTIES
+   ========================================================= */
+
+async function setCustomProperty(
+  context,
+  worksheet,
+  key,
+  value
+) {
+  const properties =
+    worksheet.customProperties;
+
+  const existing =
+    properties.getItemOrNullObject(key);
+
+  existing.load("isNullObject");
+
+  await context.sync();
+
+  if (!existing.isNullObject) {
+    existing.delete();
+    await context.sync();
+  }
+
+  properties.add(
+    key,
+    String(value)
+  );
+}
+
+
+/* =========================================================
+   TAB COLORS
+   ========================================================= */
+
+function setupColorMenu() {
+  document.querySelectorAll(
+    ".color-choice"
+  ).forEach((button) => {
+    button.addEventListener(
+      "click",
+      async (event) => {
+        event.stopPropagation();
+
+        const color =
+          button.dataset.color;
+
+        closeMenus();
+
+        await setTabColor(
+          selectedSheetId,
+          color
+        );
+      }
+    );
+  });
+}
+
+
+function openColorMenu() {
+  const menu =
+    document.getElementById("sheetMenu");
+
+  const colorMenu =
+    document.getElementById(
+      "colorMenu"
+    );
+
+  const rect =
+    menu.getBoundingClientRect();
+
+  colorMenu.hidden = false;
+
+  colorMenu.style.left =
+    `${Math.max(
+      5,
+      rect.left - colorMenu.offsetWidth - 6
+    )}px`;
+
+  colorMenu.style.top =
+    `${Math.min(
+      rect.top,
+      window.innerHeight -
+      colorMenu.offsetHeight - 5
+    )}px`;
+}
+
+
+async function setTabColor(
+  sheetId,
+  color
+) {
+  try {
+    await Excel.run(async (context) => {
+      const worksheet =
+        context.workbook.worksheets
+          .getItem(sheetId);
+
+      worksheet.tabColor = color;
+
+      await context.sync();
+    });
+
+    await loadSheets();
+
+  } catch (error) {
+    showError(error);
+  }
+}
+
+
+/* =========================================================
+   DRAG AND DROP
+   ========================================================= */
 
 function handleDragStart(event) {
-
   draggedSheetId =
-    event.currentTarget
-      .dataset.sheetId;
+    event.currentTarget.dataset.sheetId;
 
   event.currentTarget
     .classList.add("dragging");
@@ -717,7 +1163,6 @@ function handleDragStart(event) {
 
 
 function handleDragOver(event) {
-
   event.preventDefault();
 
   event.dataTransfer.dropEffect =
@@ -729,431 +1174,232 @@ function handleDragOver(event) {
 
 
 function handleDragLeave(event) {
-
   event.currentTarget
     .classList.remove("drag-over");
 }
 
 
 async function handleDrop(event) {
-
   event.preventDefault();
 
-  const targetSheetId =
-    event.currentTarget
-      .dataset.sheetId;
+  const targetId =
+    event.currentTarget.dataset.sheetId;
 
   event.currentTarget
     .classList.remove("drag-over");
 
-
   if (
     !draggedSheetId ||
-    draggedSheetId === targetSheetId
+    draggedSheetId === targetId
   ) {
     return;
   }
 
+  try {
+    await Excel.run(async (context) => {
+      const sheets =
+        context.workbook.worksheets;
 
-  await moveSheet(
-    draggedSheetId,
-    targetSheetId
-  );
+      const source =
+        sheets.getItem(draggedSheetId);
+
+      const target =
+        sheets.getItem(targetId);
+
+      target.load("position");
+
+      await context.sync();
+
+      source.position = target.position;
+
+      await context.sync();
+    });
+
+    await loadSheets();
+
+  } catch (error) {
+    showError(error);
+  }
 }
 
 
 function handleDragEnd(event) {
-
   event.currentTarget
     .classList.remove("dragging");
 
-  document
-    .querySelectorAll(".drag-over")
-    .forEach(
-      element =>
-        element.classList.remove(
-          "drag-over"
-        )
+  document.querySelectorAll(
+    ".drag-over"
+  ).forEach((element) => {
+    element.classList.remove(
+      "drag-over"
     );
+  });
 
   draggedSheetId = null;
 }
 
 
-async function moveSheet(
-  sourceId,
-  targetId
-) {
+/* =========================================================
+   CHANGE HISTORY
+   ========================================================= */
 
-  try {
+function openHistory(sheet) {
+  closeMenus();
 
-    await Excel.run(
-      async (context) => {
+  document.getElementById(
+    "historySheetName"
+  ).textContent =
+    sheet.name;
 
-        const sheets =
-          context.workbook.worksheets;
-
-        const source =
-          sheets.getItem(sourceId);
-
-        const target =
-          sheets.getItem(targetId);
-
-        target.load("position");
-
-        await context.sync();
-
-        source.position =
-          target.position;
-
-        await context.sync();
-      }
-    );
-
-    await loadSheets();
-
-  } catch (error) {
-    showError(error);
-  }
-}
-
-
-/* SHEET ACTION MENU */
-
-function openSheetMenu(
-  button,
-  sheetId
-) {
-
-  selectedSheetId =
-    sheetId;
-
-  const menu =
+  const reviewInfo =
     document.getElementById(
-      "sheetMenu"
+      "historyReviewInfo"
     );
 
-  const sheet =
-    sheetCache.find(
-      item =>
-        item.id === sheetId
+  const statusLabel =
+    STATUS_LABELS[
+      sheet.workflowStatus
+    ] || "No Status";
+
+  const signedAt =
+    formatDateTime(sheet.statusAt);
+
+  reviewInfo.textContent =
+    `${statusLabel}` +
+    `${sheet.statusBy
+      ? ` by ${sheet.statusBy}`
+      : ""}` +
+    `${signedAt
+      ? ` • ${signedAt}`
+      : ""}`;
+
+
+  const list =
+    document.getElementById(
+      "historyList"
     );
 
+  list.replaceChildren();
 
-  const visibilityButton =
-    menu.querySelector(
-      '[data-action="visibility"]'
+  for (
+    const item of sheet.changeHistory
+  ) {
+    const entry =
+      document.createElement("div");
+
+    entry.className =
+      "history-item";
+
+    const time =
+      document.createElement("div");
+
+    time.className =
+      "history-time";
+
+    time.textContent =
+      formatDateTime(item.timestamp);
+
+
+    const address =
+      document.createElement("div");
+
+    address.className =
+      "history-address";
+
+    address.textContent =
+      item.address ||
+      "Unknown range";
+
+
+    const values =
+      document.createElement("div");
+
+    values.className =
+      "history-values";
+
+    if (
+      item.before !== "" ||
+      item.after !== ""
+    ) {
+      values.textContent =
+        `${item.before || "(blank)"} → ` +
+        `${item.after || "(blank)"}`;
+    } else {
+      values.textContent =
+        item.changeType ||
+        "Range edited";
+    }
+
+    entry.append(
+      time,
+      address,
+      values
     );
 
-  visibilityButton.textContent =
-    sheet.visibility === "Visible"
-      ? "Hide"
-      : "Unhide";
-
-
-  const rect =
-    button.getBoundingClientRect();
-
-  menu.style.top =
-    `${rect.bottom + 2}px`;
-
-  menu.style.right =
-    "5px";
-
-  menu.hidden = false;
+    list.append(entry);
+  }
 
 
   document.getElementById(
-    "colorMenu"
+    "historyEmpty"
+  ).hidden =
+    sheet.changeHistory.length !== 0;
+
+
+  document.getElementById(
+    "historyOverlay"
+  ).hidden = false;
+}
+
+
+function closeHistory() {
+  document.getElementById(
+    "historyOverlay"
   ).hidden = true;
 }
 
 
-function setupMenuActions() {
-
-  document
-    .querySelectorAll(
-      "#sheetMenu button"
-    )
-    .forEach((button) => {
-
-      button.addEventListener(
-        "click",
-        async (event) => {
-
-          event.stopPropagation();
-
-          const action =
-            button.dataset.action;
-
-          const sheet =
-            sheetCache.find(
-              item =>
-                item.id ===
-                selectedSheetId
-            );
-
-          if (!sheet) {
-            return;
-          }
-
-
-          if (action === "activate") {
-
-            closeMenus();
-
-            await activateSheet(
-              sheet.id
-            );
-
-          }
-
-
-          if (action === "rename") {
-
-            closeMenus();
-
-            await renameSheet(
-              sheet
-            );
-
-          }
-
-
-          if (action === "visibility") {
-
-            closeMenus();
-
-            await toggleVisibility(
-              sheet
-            );
-
-          }
-
-
-          if (action === "color") {
-
-            openColorMenu();
-
-          }
-
-        }
-      );
-    });
-}
-
-
-async function renameSheet(sheet) {
-
-  const newName =
-    window.prompt(
-      "Worksheet name:",
-      sheet.name
-    );
-
-  if (!newName) {
-    return;
+function formatDateTime(value) {
+  if (!value) {
+    return "";
   }
 
-  const cleanedName =
-    newName.trim();
-
-  if (!cleanedName) {
-    return;
-  }
-
-
-  try {
-
-    await Excel.run(
-      async (context) => {
-
-        const worksheet =
-          context.workbook
-            .worksheets
-            .getItem(sheet.id);
-
-        worksheet.name =
-          cleanedName;
-
-        await context.sync();
-      }
-    );
-
-    await loadSheets();
-
-  } catch (error) {
-    showError(error);
-  }
-}
-
-
-async function toggleVisibility(sheet) {
-
-  try {
-
-    await Excel.run(
-      async (context) => {
-
-        const sheets =
-          context.workbook.worksheets;
-
-        const worksheet =
-          sheets.getItem(sheet.id);
-
-
-        if (
-          sheet.visibility === "Visible"
-        ) {
-
-          const visibleCount =
-            sheetCache.filter(
-              item =>
-                item.visibility ===
-                "Visible"
-            ).length;
-
-          if (visibleCount <= 1) {
-
-            window.alert(
-              "Excel must have at least one visible worksheet."
-            );
-
-            return;
-          }
-
-          worksheet.visibility =
-            "Hidden";
-
-        } else {
-
-          worksheet.visibility =
-            "Visible";
-        }
-
-        await context.sync();
-      }
-    );
-
-    await loadSheets();
-
-  } catch (error) {
-    showError(error);
-  }
-}
-
-
-/* COLOR MENU */
-
-function openColorMenu() {
-
-  const sheetMenu =
-    document.getElementById(
-      "sheetMenu"
-    );
-
-  const colorMenu =
-    document.getElementById(
-      "colorMenu"
-    );
-
-  const rect =
-    sheetMenu
-      .getBoundingClientRect();
-
-  colorMenu.style.top =
-    `${rect.top}px`;
-
-  colorMenu.style.right =
-    `${rect.width + 10}px`;
-
-  colorMenu.hidden = false;
-}
-
-
-function setupColorMenu() {
-
-  document
-    .querySelectorAll(
-      ".color-choice"
-    )
-    .forEach((button) => {
-
-      button.addEventListener(
-        "click",
-        async (event) => {
-
-          event.stopPropagation();
-
-          const color =
-            button.dataset.color;
-
-          closeMenus();
-
-          await setTabColor(
-            selectedSheetId,
-            color
-          );
-        }
-      );
-    });
-}
-
-
-async function setTabColor(
-  sheetId,
-  color
-) {
-
-  try {
-
-    await Excel.run(
-      async (context) => {
-
-        const worksheet =
-          context.workbook
-            .worksheets
-            .getItem(sheetId);
-
-        worksheet.tabColor =
-          color;
-
-        await context.sync();
-      }
-    );
-
-    await loadSheets();
-
-  } catch (error) {
-    showError(error);
-  }
-}
-
-
-/* MENU HELPERS */
-
-function handleOutsideClick(
-  event
-) {
+  const date =
+    new Date(value);
 
   if (
-    !event.target.closest(
-      "#sheetMenu"
-    ) &&
-    !event.target.closest(
-      "#colorMenu"
-    ) &&
-    !event.target.closest(
-      ".more-button"
-    )
+    Number.isNaN(date.getTime())
+  ) {
+    return value;
+  }
+
+  return date.toLocaleString();
+}
+
+
+/* =========================================================
+   GENERAL HELPERS
+   ========================================================= */
+
+function handleOutsideClick(event) {
+  if (
+    !event.target.closest("#sheetMenu") &&
+    !event.target.closest("#colorMenu")
   ) {
     closeMenus();
   }
 }
 
 
-function closeMenus() {
+function handleKeyboard(event) {
+  if (event.key === "Escape") {
+    closeMenus();
+    closeHistory();
+  }
+}
 
+
+function closeMenus() {
   document.getElementById(
     "sheetMenu"
   ).hidden = true;
@@ -1164,33 +1410,24 @@ function closeMenus() {
 }
 
 
-/* KEEP ACTIVE SHEET VISIBLE */
-
 function scrollActiveIntoView() {
-
   requestAnimationFrame(() => {
-
-    const activeRow =
+    const row =
       document.querySelector(
         `.sheet-row[data-sheet-id="${activeSheetId}"]`
       );
 
-    if (activeRow) {
-
-      activeRow.scrollIntoView({
+    if (row) {
+      row.scrollIntoView({
         block: "nearest",
         behavior: "smooth"
       });
     }
-
   });
 }
 
 
-/* ERRORS */
-
 function showError(error) {
-
   console.error(error);
 
   setStatus(
@@ -1205,17 +1442,11 @@ function setStatus(
   message,
   isError = false
 ) {
-
   const status =
-    document.getElementById(
-      "status"
-    );
+    document.getElementById("status");
 
-  status.textContent =
-    message;
+  status.textContent = message;
 
   status.style.color =
-    isError
-      ? "#ffd7d7"
-      : "";
+    isError ? "#c50f1f" : "";
 }

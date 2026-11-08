@@ -1,0 +1,12 @@
+{
+  "name": "excel-sheet-navigator",
+  "version": "1.0.0",
+  "description": "Scrollable vertical worksheet navigator for Microsoft Excel",
+  "private": true,
+  "scripts": {
+    "start": "http-server . -p 3000"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

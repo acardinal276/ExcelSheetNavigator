@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Excel Sheet Navigator</title>
+
+  <link rel="stylesheet" href="taskpane.css">
+
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <header>
+      <div>
+        <h1>Sheet Navigator</h1>
+        <p id="status">Connecting to Excel...</p>
+      </div>
+
+      <button id="refresh" title="Refresh worksheets">
+        ↻
+      </button>
+    </header>
+
+    <section class="controls">
+
+      <div class="search-box">
+        <input
+          id="search"
+          type="search"
+          placeholder="Search worksheets..."
+          aria-label="Search worksheets"
+        >
+      </div>
+
+      <label class="hidden-option">
+        <input id="showHidden" type="checkbox">
+        Show hidden sheets
+      </label>
+
+    </section>
+
+    <div class="list-header">
+      <strong>Worksheets</strong>
+      <span id="count"></span>
+    </div>
+
+    <main class="sheet-container">
+
+      <ul id="sheetList"></ul>
+
+      <div id="empty" hidden>
+        No matching worksheets
+      </div>
+
+    </main>
+
+    <footer>
+      Click a worksheet to activate it
+    </footer>
+
+  </div>
+
+  <script src="taskpane.js"></script>
+
+</body>
+</html>

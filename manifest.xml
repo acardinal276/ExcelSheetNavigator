@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp
+    xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:type="TaskPaneApp">
+
+  <Id>8f02c395-c8ec-4dc4-b9a8-e08b3e11df20</Id>
+
+  <Version>1.0.0.0</Version>
+
+  <ProviderName>Excel Sheet Navigator</ProviderName>
+
+  <DefaultLocale>en-US</DefaultLocale>
+
+  <DisplayName DefaultValue="Sheet Navigator"/>
+
+  <Description DefaultValue="Scrollable vertical worksheet navigator for Microsoft Excel."/>
+
+  <IconUrl DefaultValue="https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev/icon.png"/>
+
+  <SupportUrl DefaultValue="https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev/"/>
+
+  <AppDomains>
+    <AppDomain>https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev</AppDomain>
+  </AppDomains>
+
+  <Hosts>
+    <Host Name="Workbook"/>
+  </Hosts>
+
+  <DefaultSettings>
+    <SourceLocation DefaultValue="https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev/taskpane.html"/>
+  </DefaultSettings>
+
+  <Permissions>ReadWriteDocument</Permissions>
+
+</OfficeApp>

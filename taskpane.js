@@ -73,6 +73,7 @@ async function loadSheets() {
 
   try {
     await Excel.run(async (context) => {
+
       const sheets = context.workbook.worksheets;
       const activeSheet = sheets.getActiveWorksheet();
 
@@ -85,13 +86,15 @@ async function loadSheets() {
 
       await context.sync();
 
-      const loaded = [];
+      const loadedSheets = [];
 
       for (const sheet of sheets.items) {
+
         const props = sheet.customProperties;
+
         props.load("items/key,items/value");
 
-        loaded.push({
+        loadedSheets.push({
           sheet,
           props
         });
@@ -99,11 +102,12 @@ async function loadSheets() {
 
       await context.sync();
 
-      sheetCache = loaded.map(({ sheet, props }) => {
+      sheetCache = loadedSheets.map(({ sheet, props }) => {
+
         const metadata = {};
 
-        for (const property of props.items) {
-          metadata[property.key] = property.value;
+        for (const prop of props.items) {
+          metadata[prop.key] = prop.value;
         }
 
         return {
@@ -114,51 +118,67 @@ async function loadSheets() {
           position: sheet.position,
 
           workflowStatus:
-            metadata[KEYS.status] || "none",
+            metadata["SheetNavigator.Status"] || "none",
 
           statusBy:
-            metadata[KEYS.statusBy] || "",
+            metadata["SheetNavigator.StatusBy"] || "",
 
           statusAt:
-            metadata[KEYS.statusAt] || "",
+            metadata["SheetNavigator.StatusAt"] || "",
 
           changedAfterReview:
-            metadata[KEYS.changed] === "true",
+            metadata["SheetNavigator.ChangedAfterReview"] === "true",
 
           changeHistory:
-            parseHistory(metadata[KEYS.history])
+            parseHistory(
+              metadata["SheetNavigator.ChangeHistory"]
+            )
         };
       });
 
       sheetCache.sort(
-        (left, right) =>
-          left.position - right.position
+        (a, b) => a.position - b.position
       );
 
       activeSheetId = activeSheet.id;
 
       if (!handlersRegistered) {
-        sheets.onActivated.add(onWorksheetActivated);
-        sheets.onAdded.add(loadSheets);
-        sheets.onDeleted.add(loadSheets);
-        sheets.onChanged.add(onWorksheetChanged);
+
+        sheets.onActivated.add(
+          onWorksheetActivated
+        );
+
+        sheets.onAdded.add(
+          loadSheets
+        );
+
+        sheets.onDeleted.add(
+          loadSheets
+        );
 
         handlersRegistered = true;
 
         await context.sync();
       }
+
     });
 
     setStatus("Ready");
+
     renderSheets();
+
     scrollActiveIntoView();
 
   } catch (error) {
-    showError(error);
+
+    console.error(error);
+
+    setStatus(
+      error.message || "Unable to load worksheets.",
+      true
+    );
   }
 }
-
-
 function parseHistory(value) {
   if (!value) {
     return [];

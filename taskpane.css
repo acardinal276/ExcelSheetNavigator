@@ -10,10 +10,16 @@ body {
 
 body {
   font-family: "Segoe UI", Arial, sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   color: #242424;
-  background: white;
+  background: #ffffff;
   overflow: hidden;
+}
+
+button,
+input,
+select {
+  font: inherit;
 }
 
 .app {
@@ -23,134 +29,187 @@ body {
   min-height: 0;
 }
 
+
 /* HEADER */
 
-header {
-  flex-shrink: 0;
+.app-header {
+  flex: 0 0 auto;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
 
-  padding: 12px 14px;
+  padding: 8px 10px;
 
   background: #0f6cbd;
   color: white;
 }
 
-header h1 {
+.app-header h1 {
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
 }
 
-header p {
-  margin: 2px 0 0;
-  font-size: 11px;
+.app-header p {
+  margin: 1px 0 0;
+  font-size: 10px;
   opacity: 0.9;
 }
 
-#refresh {
-  width: 34px;
-  height: 34px;
+.header-button {
+  width: 28px;
+  height: 28px;
 
-  border: none;
+  padding: 0;
+
+  border: 0;
   border-radius: 4px;
 
   background: rgba(255,255,255,0.15);
   color: white;
 
-  font-size: 20px;
+  font-size: 18px;
 
   cursor: pointer;
 }
 
-#refresh:hover {
+.header-button:hover {
   background: rgba(255,255,255,0.25);
 }
 
 
-/* SEARCH */
+/* CONTROLS */
 
 .controls {
-  flex-shrink: 0;
+  flex: 0 0 auto;
 
-  padding: 10px 12px;
+  padding: 7px 8px;
 
   border-bottom: 1px solid #e1dfdd;
+}
+
+.search-box {
+  width: 100%;
+
+  padding: 5px 7px;
+
+  border: 1px solid #8a8886;
+  border-radius: 3px;
+
+  outline: none;
+}
+
+.search-box:focus {
+  border-color: #0f6cbd;
+  box-shadow: 0 0 0 1px #0f6cbd;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 8px;
+
+  margin-top: 6px;
+
+  font-size: 11px;
+}
+
+.control-row label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.control-row select {
+  max-width: 145px;
+
+  padding: 3px 5px;
+
+  border: 1px solid #c8c6c4;
+  border-radius: 3px;
 
   background: white;
 }
 
-.search-box input {
-  width: 100%;
 
-  padding: 8px 10px;
+/* WORKSHEET COLUMN HEADER */
 
-  border: 1px solid #8a8886;
-  border-radius: 4px;
+.sheet-header {
+  flex: 0 0 auto;
 
-  font-family: inherit;
-}
+  display: grid;
 
-.search-box input:focus {
-  outline: 2px solid #0f6cbd;
-  outline-offset: -1px;
-}
+  grid-template-columns:
+    18px
+    minmax(0, 1fr)
+    24px
+    24px
+    24px
+    25px;
 
-.hidden-option {
-  display: flex;
   align-items: center;
-  gap: 6px;
 
-  margin-top: 8px;
+  min-height: 24px;
 
-  font-size: 12px;
-  color: #605e5c;
-}
+  padding: 0 5px;
 
+  border-bottom: 1px solid #e1dfdd;
 
-/* LIST HEADER */
-
-.list-header {
-  flex-shrink: 0;
-
-  display: flex;
-  justify-content: space-between;
-
-  padding: 8px 12px 5px;
+  background: #faf9f8;
 
   color: #605e5c;
 
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 600;
+
   text-transform: uppercase;
-  letter-spacing: .4px;
+}
+
+.sheet-column {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#count {
+  margin-left: 4px;
+
+  color: #8a8886;
+
+  font-weight: 400;
+}
+
+.sign-column {
+  text-align: center;
 }
 
 
-/* SCROLLING AREA */
+/* SCROLLABLE AREA */
 
 .sheet-container {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
 
   overflow-y: auto;
   overflow-x: hidden;
 
-  padding: 0 4px 8px;
+  scrollbar-gutter: stable;
 }
 
 
-/* SCROLL BAR */
+/* SCROLLBAR */
 
 .sheet-container::-webkit-scrollbar {
-  width: 10px;
+  width: 9px;
 }
 
 .sheet-container::-webkit-scrollbar-thumb {
   background: #c8c6c4;
-  border-radius: 8px;
 
   border: 2px solid white;
+  border-radius: 8px;
 }
 
 .sheet-container::-webkit-scrollbar-track {
@@ -158,34 +217,85 @@ header p {
 }
 
 
-/* SHEET LIST */
+/* WORKSHEET LIST */
 
 #sheetList {
-  list-style: none;
-
   margin: 0;
   padding: 0;
+
+  list-style: none;
 }
 
 
-/* INDIVIDUAL SHEET */
+/* WORKSHEET ROW */
 
-.sheet {
-  width: 100%;
+.sheet-row {
+  display: grid;
+
+  grid-template-columns:
+    18px
+    minmax(0, 1fr)
+    24px
+    24px
+    24px
+    25px;
+
+  align-items: center;
+
+  min-height: 25px;
+
+  padding: 0 5px;
+
+  border-left: 3px solid transparent;
+  border-bottom: 1px solid #f3f2f1;
+
+  background: white;
+
+  user-select: none;
+}
+
+.sheet-row:hover {
+  background: #f3f2f1;
+}
+
+.sheet-row.active {
+  background: #e5f1fb;
+
+  border-left-color: #0f6cbd;
+}
+
+
+/* DRAG HANDLE */
+
+.drag-handle {
+  color: #a19f9d;
+
+  text-align: center;
+
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+
+/* SHEET BUTTON */
+
+.sheet-button {
+  min-width: 0;
 
   display: flex;
   align-items: center;
+  gap: 5px;
 
-  gap: 8px;
+  height: 24px;
 
-  min-height: 34px;
+  padding: 0;
 
-  padding: 7px 8px;
+  border: 0;
 
-  border: none;
-  border-left: 3px solid transparent;
-
-  background: white;
+  background: transparent;
 
   color: #242424;
 
@@ -194,94 +304,253 @@ header p {
   cursor: pointer;
 }
 
-.sheet:hover {
-  background: #f3f2f1;
+.sheet-button:hover {
+  color: #0f6cbd;
 }
 
 
-/* ACTIVE WORKSHEET */
+/* TAB COLOR */
 
-.sheet.active {
-  background: #e5f1fb;
+.tab-color {
+  width: 8px;
+  height: 8px;
 
-  border-left-color: #0f6cbd;
-
-  font-weight: 600;
-}
-
-
-/* HIDDEN WORKSHEET */
-
-.sheet.hidden {
-  opacity: 0.55;
-}
-
-
-/* EXCEL TAB COLOR */
-
-.dot {
-  width: 9px;
-  height: 9px;
-
-  flex-shrink: 0;
+  flex: 0 0 8px;
 
   border-radius: 2px;
 
-  background: #bbb;
+  background: #c8c6c4;
 }
 
 
 /* SHEET NAME */
 
-.name {
+.sheet-name {
+  min-width: 0;
+
   overflow: hidden;
 
-  white-space: nowrap;
-
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-row.active .sheet-name {
+  font-weight: 600;
 }
 
 
-/* HIDDEN LABEL */
+/* HIDDEN SHEETS */
 
-.badge {
-  margin-left: auto;
+.sheet-row.hidden-sheet {
+  opacity: 0.55;
+}
 
-  padding: 2px 5px;
+.hidden-label {
+  margin-left: 4px;
 
-  border-radius: 8px;
-
-  background: #edebe9;
-
-  color: #605e5c;
+  color: #8a8886;
 
   font-size: 9px;
 }
 
 
-/* EMPTY SEARCH */
+/* SIGN-OFF BUTTONS */
 
-#empty {
-  padding: 30px 12px;
+.signoff {
+  width: 20px;
+  height: 20px;
+
+  margin: auto;
+
+  padding: 0;
+
+  border: 1px solid transparent;
+  border-radius: 3px;
+
+  background: transparent;
+
+  color: #8a8886;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.signoff:hover {
+  border-color: #c8c6c4;
+
+  background: white;
+}
+
+.signoff.signed {
+  background: #dff6dd;
+
+  color: #107c10;
+}
+
+
+/* ACTION MENU */
+
+.more-button {
+  width: 22px;
+  height: 20px;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 3px;
+
+  background: transparent;
+
+  color: #605e5c;
+
+  cursor: pointer;
+}
+
+.more-button:hover {
+  background: #e1dfdd;
+}
+
+
+/* DRAGGING */
+
+.sheet-row.dragging {
+  opacity: 0.4;
+}
+
+.sheet-row.drag-over {
+  border-top: 2px solid #0f6cbd;
+}
+
+
+/* EMPTY MESSAGE */
+
+.empty-message {
+  padding: 25px 10px;
+
+  color: #605e5c;
 
   text-align: center;
-
-  color: #666;
 }
 
 
 /* FOOTER */
 
 footer {
-  flex-shrink: 0;
+  flex: 0 0 auto;
 
-  padding: 7px 12px;
+  padding: 5px 8px;
 
   border-top: 1px solid #e1dfdd;
 
   background: #faf9f8;
 
-  color: #666;
+  color: #605e5c;
 
-  font-size: 11px;
+  font-size: 9px;
+}
+
+.legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+
+/* POPUP MENUS */
+
+.sheet-menu,
+.color-menu {
+  position: fixed;
+
+  z-index: 1000;
+
+  padding: 4px;
+
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+
+  background: white;
+
+  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
+}
+
+
+/* SHEET MENU */
+
+.sheet-menu {
+  min-width: 120px;
+}
+
+.sheet-menu button {
+  display: block;
+
+  width: 100%;
+
+  padding: 5px 8px;
+
+  border: 0;
+
+  background: white;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.sheet-menu button:hover {
+  background: #f3f2f1;
+}
+
+
+/* COLOR MENU */
+
+.color-menu {
+  display: flex;
+  gap: 5px;
+}
+
+.color-choice {
+  width: 20px;
+  height: 20px;
+
+  padding: 0;
+
+  border: 1px solid #c8c6c4;
+  border-radius: 3px;
+
+  cursor: pointer;
+}
+
+.color-choice.red {
+  background: #c50f1f;
+}
+
+.color-choice.orange {
+  background: #f7630c;
+}
+
+.color-choice.yellow {
+  background: #fce100;
+}
+
+.color-choice.green {
+  background: #13a10e;
+}
+
+.color-choice.blue {
+  background: #0078d4;
+}
+
+.color-choice.purple {
+  background: #886ce4;
+}
+
+.color-choice.none {
+  background: white;
+
+  color: #605e5c;
+
+  font-weight: bold;
 }

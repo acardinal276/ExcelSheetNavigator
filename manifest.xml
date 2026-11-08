@@ -16,12 +16,12 @@
 
   <Description DefaultValue="Scrollable vertical worksheet navigator for Microsoft Excel."/>
 
-  <IconUrl DefaultValue="https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev/icon.png"/>
+  <IconUrl DefaultValue="https://acardinal276.github.io/ExcelSheetNavigator/icon.png"/>
 
-  <SupportUrl DefaultValue="https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev/"/>
+  <SupportUrl DefaultValue="https://acardinal276.github.io/ExcelSheetNavigator/"/>
 
   <AppDomains>
-    <AppDomain>https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev</AppDomain>
+    <AppDomain>https://acardinal276.github.io/ExcelSheetNavigator</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -29,7 +29,7 @@
   </Hosts>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://upgraded-space-umbrella-xr4v6q9vv9vv3v9x6-3000.app.github.dev/taskpane.html"/>
+    <SourceLocation DefaultValue="https://acardinal276.github.io/ExcelSheetNavigator/taskpane.html"/>
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>

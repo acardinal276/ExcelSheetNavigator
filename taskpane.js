@@ -694,6 +694,9 @@ function setupMenuActions() {
         if (!sheet) {
           return;
         }
+setStatus(
+  `Clicked: ${action} ${button.dataset.status || ""}`
+);
 
         if (action === "color") {
           openColorMenu();

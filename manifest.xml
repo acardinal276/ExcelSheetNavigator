@@ -29,7 +29,8 @@
   </Hosts>
 
   <DefaultSettings>
-    <SourceLocation DefaultValue="https://acardinal276.github.io/ExcelSheetNavigator/taskpane.html?v=3"/>
+    <SourceLocation DefaultValue="https://acardinal276.github.io/ExcelSheetNavigator/taskpane.html?v=4
+"/>
   </DefaultSettings>
 
   <Permissions>ReadWriteDocument</Permissions>

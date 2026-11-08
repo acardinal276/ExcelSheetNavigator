@@ -945,29 +945,6 @@ async function setWorkflowStatus(
   sheet,
   workflowStatus
 ) {
-  let initials = "";
-
-  if (workflowStatus !== "none") {
-    initials =
-      window.prompt(
-        `Enter initials for ${
-          STATUS_LABELS[workflowStatus]
-        }:`,
-        sheet.statusBy || ""
-      );
-
-    if (initials === null) {
-      return;
-    }
-
-    initials =
-      initials.trim().toUpperCase();
-
-    if (!initials) {
-      return;
-    }
-  }
-
   const timestamp =
     workflowStatus === "none"
       ? ""
@@ -975,6 +952,7 @@ async function setWorkflowStatus(
 
   try {
     await Excel.run(async (context) => {
+
       const worksheet =
         context.workbook.worksheets
           .getItem(sheet.id);
@@ -990,7 +968,7 @@ async function setWorkflowStatus(
         context,
         worksheet,
         KEYS.statusBy,
-        initials
+        ""
       );
 
       await setCustomProperty(
@@ -1001,8 +979,8 @@ async function setWorkflowStatus(
       );
 
       /*
-       * A new Reviewed or Signer Review sign-off confirms
-       * that prior outstanding changes were addressed.
+       * Re-marking Reviewed or Signer Review confirms
+       * that outstanding changes have been addressed.
        */
       if (
         workflowStatus === "reviewed" ||

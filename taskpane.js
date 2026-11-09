@@ -9,6 +9,23 @@ let dialogResolver = null;
 
 
 /* =========================================
+   WORKFLOW STATUS
+   ========================================= */
+
+const STATUS_KEY =
+  "SheetNavigator.Status";
+
+
+const STATUS_LABELS = {
+  none: "",
+  prepared: "Prepared",
+  reviewed: "Reviewed",
+  openItems: "Open Items",
+  signerReview: "Signer Review"
+};
+
+
+/* =========================================
    COLOR PALETTES
    ========================================= */
 
@@ -26,10 +43,7 @@ const THEME_COLORS = [
   "#C98982", "#A9D18E", "#9E8BBE", "#79B4CB", "#F4B183",
 
   "#A6A6A6", "#262626", "#4C4524", "#244062", "#4472C4",
-  "#943634", "#6B8E23", "#60497A", "#3F8496", "#D2691E",
-
-  "#7F7F7F", "#000000", "#1C1A0D", "#17365D", "#2F5597",
-  "#632523", "#4F6228", "#403151", "#275D6B", "#984807"
+  "#943634", "#6B8E23", "#60497A", "#3F8496", "#D2691E"
 ];
 
 
@@ -53,7 +67,11 @@ const STANDARD_COLORS = [
 
 Office.onReady((info) => {
 
-  if (info.host !== Office.HostType.Excel) {
+  if (
+    info.host !==
+    Office.HostType.Excel
+  ) {
+
     setStatus(
       "Open this add-in in Excel.",
       true
@@ -130,7 +148,7 @@ async function loadSheets() {
           context.workbook.worksheets;
 
 
-        const activeSheet =
+        const active =
           sheets.getActiveWorksheet();
 
 
@@ -140,7 +158,7 @@ async function loadSheets() {
         );
 
 
-        activeSheet.load("id");
+        active.load("id");
 
 
         await context.sync();
@@ -207,41 +225,10 @@ async function loadSheets() {
                 position:
                   sheet.position,
 
-
-                preparedBy:
+                workflowStatus:
                   metadata[
-                    "SheetNavigator.PreparedBy"
-                  ] || "",
-
-
-                preparedAt:
-                  metadata[
-                    "SheetNavigator.PreparedAt"
-                  ] || "",
-
-
-                reviewedBy:
-                  metadata[
-                    "SheetNavigator.ReviewedBy"
-                  ] || "",
-
-
-                reviewedAt:
-                  metadata[
-                    "SheetNavigator.ReviewedAt"
-                  ] || "",
-
-
-                signedBy:
-                  metadata[
-                    "SheetNavigator.SignedBy"
-                  ] || "",
-
-
-                signedAt:
-                  metadata[
-                    "SheetNavigator.SignedAt"
-                  ] || ""
+                    STATUS_KEY
+                  ] || "none"
 
               };
 
@@ -251,12 +238,13 @@ async function loadSheets() {
 
         sheetCache.sort(
           (a, b) =>
-            a.position - b.position
+            a.position -
+            b.position
         );
 
 
         activeSheetId =
-          activeSheet.id;
+          active.id;
 
 
         if (!handlersRegistered) {
@@ -276,7 +264,8 @@ async function loadSheets() {
           );
 
 
-          handlersRegistered = true;
+          handlersRegistered =
+            true;
 
 
           await context.sync();
@@ -298,14 +287,7 @@ async function loadSheets() {
 
   } catch (error) {
 
-    console.error(error);
-
-
-    setStatus(
-      error.message ||
-      "Unable to load worksheets.",
-      true
-    );
+    showError(error);
 
   }
 
@@ -313,7 +295,7 @@ async function loadSheets() {
 
 
 /* =========================================
-   WORKSHEET ACTIVATION
+   ACTIVATE WORKSHEET
    ========================================= */
 
 function onWorksheetActivated(
@@ -400,26 +382,44 @@ function renderSheets() {
 
   const rows =
     sheetCache.filter(
-      (sheet) =>
+      (sheet) => {
 
-        sheet.name
-          .toLowerCase()
-          .includes(query)
+        const matchesSearch =
+          sheet.name
+            .toLowerCase()
+            .includes(query);
 
-        &&
 
-        (
+        const matchesVisibility =
           showHidden ||
-          sheet.visibility === "Visible"
-        )
+          sheet.visibility ===
+            "Visible";
 
-        &&
 
-        statusMatches(
-          sheet,
-          filter
-        )
+        const matchesStatus =
+          filter === "all"
 
+          ||
+
+          (
+            filter === "none" &&
+            sheet.workflowStatus ===
+              "none"
+          )
+
+          ||
+
+          sheet.workflowStatus ===
+            filter;
+
+
+        return (
+          matchesSearch &&
+          matchesVisibility &&
+          matchesStatus
+        );
+
+      }
     );
 
 
@@ -460,6 +460,48 @@ function renderSheets() {
       true;
 
 
+    /* WORKFLOW ROW COLOR */
+
+    if (
+      sheet.workflowStatus !==
+      "none"
+    ) {
+
+      row.classList.add(
+        `status-${sheet.workflowStatus}`
+      );
+
+    }
+
+
+    /* ACTIVE SHEET */
+
+    if (
+      sheet.id ===
+      activeSheetId
+    ) {
+
+      row.classList.add(
+        "active"
+      );
+
+    }
+
+
+    /* HIDDEN SHEET */
+
+    if (
+      sheet.visibility !==
+      "Visible"
+    ) {
+
+      row.classList.add(
+        "hidden-sheet"
+      );
+
+    }
+
+
     /* RIGHT CLICK */
 
     row.addEventListener(
@@ -479,29 +521,6 @@ function renderSheets() {
 
       }
     );
-
-
-    if (
-      sheet.id === activeSheetId
-    ) {
-
-      row.classList.add(
-        "active"
-      );
-
-    }
-
-
-    if (
-      sheet.visibility !==
-      "Visible"
-    ) {
-
-      row.classList.add(
-        "hidden-sheet"
-      );
-
-    }
 
 
     /* DRAG HANDLE */
@@ -524,7 +543,7 @@ function renderSheets() {
       "Drag to reorder";
 
 
-    /* SHEET BUTTON */
+    /* WORKSHEET BUTTON */
 
     const button =
       document.createElement(
@@ -549,19 +568,19 @@ function renderSheets() {
     );
 
 
-    /* TAB COLOR INDICATOR */
+    /* ACTUAL EXCEL TAB COLOR */
 
-    const color =
+    const tabColor =
       document.createElement(
         "span"
       );
 
 
-    color.className =
+    tabColor.className =
       "tab-color";
 
 
-    color.style.background =
+    tabColor.style.background =
       sheet.tabColor ||
       "#c8c6c4";
 
@@ -583,12 +602,10 @@ function renderSheets() {
 
 
     button.append(
-      color,
+      tabColor,
       name
     );
 
-
-    /* HIDDEN INDICATOR */
 
     if (
       sheet.visibility !==
@@ -616,68 +633,28 @@ function renderSheets() {
     }
 
 
-    /* EXISTING SIGN-OFF BUTTONS */
+    /* STATUS LABEL */
 
-    const prepared =
-      createSignoffButton(
-        sheet,
-        "prepared"
-      );
-
-
-    const reviewed =
-      createSignoffButton(
-        sheet,
-        "reviewed"
-      );
-
-
-    const signed =
-      createSignoffButton(
-        sheet,
-        "signed"
-      );
-
-
-    /* MORE BUTTON */
-
-    const more =
+    const workflow =
       document.createElement(
-        "button"
+        "span"
       );
 
 
-    more.className =
-      "more-button";
+    workflow.className =
+      "workflow-label";
 
 
-    more.textContent =
-      "⋯";
-
-
-    more.addEventListener(
-      "click",
-      (event) => {
-
-        event.stopPropagation();
-
-
-        openSheetMenuAtButton(
-          event.currentTarget,
-          sheet.id
-        );
-
-      }
-    );
+    workflow.textContent =
+      STATUS_LABELS[
+        sheet.workflowStatus
+      ] || "";
 
 
     row.append(
       drag,
       button,
-      prepared,
-      reviewed,
-      signed,
-      more
+      workflow
     );
 
 
@@ -736,320 +713,39 @@ function renderSheets() {
 
 
 /* =========================================
-   EXISTING SIGN-OFFS
+   WORKFLOW STATUS
    ========================================= */
 
-function createSignoffButton(
+async function setWorkflowStatus(
   sheet,
-  type
+  newStatus
 ) {
-
-  const button =
-    document.createElement(
-      "button"
-    );
-
-
-  button.className =
-    "signoff";
-
-
-  const values = {
-
-    prepared: {
-
-      person:
-        sheet.preparedBy,
-
-      date:
-        sheet.preparedAt,
-
-      label:
-        "Prepared"
-
-    },
-
-
-    reviewed: {
-
-      person:
-        sheet.reviewedBy,
-
-      date:
-        sheet.reviewedAt,
-
-      label:
-        "Reviewed"
-
-    },
-
-
-    signed: {
-
-      person:
-        sheet.signedBy,
-
-      date:
-        sheet.signedAt,
-
-      label:
-        "Signed"
-
-    }
-
-  };
-
-
-  const data =
-    values[type];
-
-
-  if (data.person) {
-
-    button.classList.add(
-      "signed"
-    );
-
-
-    button.textContent =
-      "✓";
-
-
-    button.title =
-      `${data.label} by ${data.person}` +
-      `${data.date
-        ? "\n" + data.date
-        : ""}`;
-
-
-  } else {
-
-    button.textContent =
-      "○";
-
-
-    button.title =
-      `Mark ${data.label}`;
-
-  }
-
-
-  button.addEventListener(
-    "click",
-    async (event) => {
-
-      event.stopPropagation();
-
-
-      await toggleSignoff(
-        sheet,
-        type
-      );
-
-    }
-  );
-
-
-  return button;
-
-}
-
-
-async function toggleSignoff(
-  sheet,
-  type
-) {
-
-  const mapping = {
-
-    prepared: {
-
-      by:
-        "SheetNavigator.PreparedBy",
-
-      at:
-        "SheetNavigator.PreparedAt",
-
-      current:
-        sheet.preparedBy
-
-    },
-
-
-    reviewed: {
-
-      by:
-        "SheetNavigator.ReviewedBy",
-
-      at:
-        "SheetNavigator.ReviewedAt",
-
-      current:
-        sheet.reviewedBy
-
-    },
-
-
-    signed: {
-
-      by:
-        "SheetNavigator.SignedBy",
-
-      at:
-        "SheetNavigator.SignedAt",
-
-      current:
-        sheet.signedBy
-
-    }
-
-  };
-
-
-  const config =
-    mapping[type];
-
 
   try {
 
-    if (config.current) {
+    await Excel.run(
+      async (context) => {
 
-      const remove =
-        await showConfirmDialog(
-          "Remove sign-off?",
-          "Remove this sign-off?",
-          "Remove",
-          true
-        );
-
-
-      if (!remove) {
-        return;
-      }
-
-
-      await Excel.run(
-        async (context) => {
-
-          const worksheet =
-            context.workbook
-              .worksheets
-              .getItem(
-                sheet.id
-              );
-
-
-          const properties =
-            worksheet
-              .customProperties;
-
-
-          const personProperty =
-            properties
-              .getItemOrNullObject(
-                config.by
-              );
-
-
-          const timeProperty =
-            properties
-              .getItemOrNullObject(
-                config.at
-              );
-
-
-          personProperty.load(
-            "isNullObject"
-          );
-
-
-          timeProperty.load(
-            "isNullObject"
-          );
-
-
-          await context.sync();
-
-
-          if (
-            !personProperty
-              .isNullObject
-          ) {
-
-            personProperty
-              .delete();
-
-          }
-
-
-          if (
-            !timeProperty
-              .isNullObject
-          ) {
-
-            timeProperty
-              .delete();
-
-          }
-
-
-          await context.sync();
-
-        }
-      );
-
-
-    } else {
-
-      const initials =
-        await showTextDialog(
-          "Add sign-off",
-          "Enter your initials:",
-          ""
-        );
-
-
-      if (!initials) {
-        return;
-      }
-
-
-      await Excel.run(
-        async (context) => {
-
-          const worksheet =
-            context.workbook
-              .worksheets
-              .getItem(
-                sheet.id
-              );
-
-
-          worksheet
-            .customProperties
-            .add(
-              config.by,
-              initials
-                .trim()
-                .toUpperCase()
+        const worksheet =
+          context.workbook
+            .worksheets
+            .getItem(
+              sheet.id
             );
 
 
-          worksheet
-            .customProperties
-            .add(
-              config.at,
-              new Date()
-                .toLocaleString()
-            );
+        worksheet
+          .customProperties
+          .add(
+            STATUS_KEY,
+            newStatus
+          );
 
 
-          await context.sync();
+        await context.sync();
 
-        }
-      );
-
-    }
+      }
+    );
 
 
     await loadSheets();
@@ -1058,58 +754,6 @@ async function toggleSignoff(
   } catch (error) {
 
     showError(error);
-
-  }
-
-}
-
-
-/* =========================================
-   STATUS FILTER
-   ========================================= */
-
-function statusMatches(
-  sheet,
-  filter
-) {
-
-  switch (filter) {
-
-    case "notPrepared":
-
-      return (
-        !sheet.preparedBy
-      );
-
-
-    case "awaitingReview":
-
-      return (
-        !!sheet.preparedBy &&
-        !sheet.reviewedBy
-      );
-
-
-    case "awaitingSigner":
-
-      return (
-        !!sheet.reviewedBy &&
-        !sheet.signedBy
-      );
-
-
-    case "complete":
-
-      return (
-        !!sheet.preparedBy &&
-        !!sheet.reviewedBy &&
-        !!sheet.signedBy
-      );
-
-
-    default:
-
-      return true;
 
   }
 
@@ -1302,11 +946,11 @@ async function moveSheet(
    ========================================= */
 
 function prepareSheetMenu(
-  sheetId
+  id
 ) {
 
   selectedSheetId =
-    sheetId;
+    id;
 
 
   const menu =
@@ -1318,14 +962,12 @@ function prepareSheetMenu(
   const sheet =
     sheetCache.find(
       item =>
-        item.id === sheetId
+        item.id === id
     );
 
 
   if (!sheet) {
-
     return null;
-
   }
 
 
@@ -1336,8 +978,11 @@ function prepareSheetMenu(
 
 
   visibilityButton.textContent =
-    sheet.visibility === "Visible"
+    sheet.visibility ===
+    "Visible"
+
       ? "Hide Sheet"
+
       : "Unhide Sheet";
 
 
@@ -1354,76 +999,19 @@ function prepareSheetMenu(
 }
 
 
-/* MENU FROM MORE BUTTON */
-
-function openSheetMenuAtButton(
-  button,
-  sheetId
-) {
-
-  const menu =
-    prepareSheetMenu(
-      sheetId
-    );
-
-
-  if (!menu) {
-    return;
-  }
-
-
-  const rect =
-    button
-      .getBoundingClientRect();
-
-
-  menu.style.left =
-    "auto";
-
-
-  menu.style.right =
-    "5px";
-
-
-  menu.style.top =
-    `${rect.bottom + 2}px`;
-
-
-  menu.hidden =
-    false;
-
-}
-
-
-/* MENU FROM RIGHT CLICK */
-
 function openSheetMenuAtPoint(
   x,
   y,
-  sheetId
+  id
 ) {
 
   const menu =
-    prepareSheetMenu(
-      sheetId
-    );
+    prepareSheetMenu(id);
 
 
   if (!menu) {
     return;
   }
-
-
-  menu.style.left =
-    "5px";
-
-
-  menu.style.right =
-    "auto";
-
-
-  menu.style.top =
-    "5px";
 
 
   menu.hidden =
@@ -1438,40 +1026,38 @@ function openSheetMenuAtPoint(
     menu.offsetHeight;
 
 
-  const left =
-    Math.max(
-      5,
-      Math.min(
-        x,
-        window.innerWidth -
-          width - 5
-      )
-    );
-
-
-  const top =
-    Math.max(
-      5,
-      Math.min(
-        y,
-        window.innerHeight -
-          height - 5
-      )
-    );
-
-
   menu.style.left =
-    `${left}px`;
+    `${
+      Math.max(
+        5,
+        Math.min(
+          x,
+          window.innerWidth -
+            width -
+            5
+        )
+      )
+    }px`;
 
 
   menu.style.top =
-    `${top}px`;
+    `${
+      Math.max(
+        5,
+        Math.min(
+          y,
+          window.innerHeight -
+            height -
+            5
+        )
+      )
+    }px`;
 
 }
 
 
 /* =========================================
-   WORKSHEET MENU ACTIONS
+   MENU ACTIONS
    ========================================= */
 
 function setupMenuActions() {
@@ -1481,17 +1067,13 @@ function setupMenuActions() {
       "#sheetMenu button"
     )
     .forEach(
-      (button) => {
+      button => {
 
         button.addEventListener(
           "click",
           async (event) => {
 
             event.stopPropagation();
-
-
-            const action =
-              button.dataset.action;
 
 
             const sheet =
@@ -1506,6 +1088,32 @@ function setupMenuActions() {
               return;
             }
 
+
+            const action =
+              button.dataset.action;
+
+
+            /* WORKFLOW */
+
+            if (
+              action === "workflow"
+            ) {
+
+              closeMenus();
+
+
+              await setWorkflowStatus(
+                sheet,
+                button.dataset.status
+              );
+
+
+              return;
+
+            }
+
+
+            /* TAB COLOR */
 
             if (
               action === "color"
@@ -1552,7 +1160,7 @@ function setupMenuActions() {
 
               case "delete":
 
-                await deleteSheetFromNavigator(
+                await deleteSheet(
                   sheet
                 );
 
@@ -1611,7 +1219,7 @@ async function insertSheetAfter(
   try {
 
     await Excel.run(
-      async (context) => {
+      async context => {
 
         const sheets =
           context.workbook
@@ -1632,14 +1240,14 @@ async function insertSheetAfter(
         await context.sync();
 
 
-        const cleanName =
+        const cleaned =
           name.trim();
 
 
         const added =
-          cleanName
+          cleaned
             ? sheets.add(
-                cleanName
+                cleaned
               )
             : sheets.add();
 
@@ -1680,7 +1288,7 @@ async function duplicateSheet(
   try {
 
     await Excel.run(
-      async (context) => {
+      async context => {
 
         const worksheet =
           context.workbook
@@ -1724,30 +1332,14 @@ async function duplicateSheet(
    DELETE SHEET
    ========================================= */
 
-async function deleteSheetFromNavigator(
+async function deleteSheet(
   sheet
 ) {
-
-  if (
-    sheetCache.length <= 1
-  ) {
-
-    await showMessageDialog(
-      "Cannot delete sheet",
-      "Excel must contain at least one worksheet."
-    );
-
-
-    return;
-
-  }
-
 
   const confirmed =
     await showConfirmDialog(
       "Delete Sheet",
-      `Delete worksheet "${sheet.name}"? ` +
-      "This action may not be reversible.",
+      `Delete worksheet "${sheet.name}"?`,
       "Delete",
       true
     );
@@ -1761,7 +1353,7 @@ async function deleteSheetFromNavigator(
   try {
 
     await Excel.run(
-      async (context) => {
+      async context => {
 
         context.workbook
           .worksheets
@@ -1818,7 +1410,7 @@ async function renameSheet(
   try {
 
     await Excel.run(
-      async (context) => {
+      async context => {
 
         context.workbook
           .worksheets
@@ -1858,7 +1450,7 @@ async function toggleVisibility(
   try {
 
     await Excel.run(
-      async (context) => {
+      async context => {
 
         const worksheet =
           context.workbook
@@ -1868,44 +1460,13 @@ async function toggleVisibility(
             );
 
 
-        if (
+        worksheet.visibility =
           sheet.visibility ===
           "Visible"
-        ) {
 
-          const visibleCount =
-            sheetCache.filter(
-              item =>
-                item.visibility ===
-                  "Visible"
-            ).length;
+            ? "Hidden"
 
-
-          if (
-            visibleCount <= 1
-          ) {
-
-            await showMessageDialog(
-              "Cannot hide sheet",
-              "Excel must have at least one visible worksheet."
-            );
-
-
-            return;
-
-          }
-
-
-          worksheet.visibility =
-            "Hidden";
-
-
-        } else {
-
-          worksheet.visibility =
-            "Visible";
-
-        }
+            : "Visible";
 
 
         await context.sync();
@@ -1927,7 +1488,7 @@ async function toggleVisibility(
 
 
 /* =========================================
-   COLOR PALETTE
+   TAB COLOR PALETTE
    ========================================= */
 
 function setupColorPalette() {
@@ -1953,7 +1514,7 @@ function setupColorPalette() {
     )
     .addEventListener(
       "click",
-      async (event) => {
+      async event => {
 
         event.stopPropagation();
 
@@ -1970,7 +1531,7 @@ function setupColorPalette() {
     );
 
 
-  const input =
+  const picker =
     document.getElementById(
       "moreColorsInput"
     );
@@ -1982,23 +1543,23 @@ function setupColorPalette() {
     )
     .addEventListener(
       "click",
-      (event) => {
+      event => {
 
         event.stopPropagation();
 
 
-        input.click();
+        picker.click();
 
       }
     );
 
 
-  input.addEventListener(
+  picker.addEventListener(
     "input",
     async () => {
 
       const color =
-        input.value;
+        picker.value;
 
 
       rememberRecentColor(
@@ -2020,16 +1581,14 @@ function setupColorPalette() {
 }
 
 
-/* RENDER COLOR BUTTONS */
-
 function renderPalette(
-  elementId,
+  id,
   colors
 ) {
 
   const host =
     document.getElementById(
-      elementId
+      id
     );
 
 
@@ -2060,7 +1619,7 @@ function renderPalette(
 
     button.addEventListener(
       "click",
-      async (event) => {
+      async event => {
 
         event.stopPropagation();
 
@@ -2091,23 +1650,35 @@ function renderPalette(
 }
 
 
-/* RECENT COLORS */
+function getRecentColors() {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(
+        "SheetNavigator.RecentColors"
+      ) || "[]"
+    );
+
+
+  } catch {
+
+    return [];
+
+  }
+
+}
+
 
 function rememberRecentColor(
   color
 ) {
 
-  if (!color) {
-    return;
-  }
-
-
   let recent =
     getRecentColors()
       .filter(
         item =>
-          item.toLowerCase() !==
-          color.toLowerCase()
+          item !== color
       );
 
 
@@ -2136,26 +1707,6 @@ function rememberRecentColor(
 }
 
 
-function getRecentColors() {
-
-  try {
-
-    return JSON.parse(
-      localStorage.getItem(
-        "SheetNavigator.RecentColors"
-      ) || "[]"
-    );
-
-
-  } catch {
-
-    return [];
-
-  }
-
-}
-
-
 function renderRecentColors() {
 
   renderPalette(
@@ -2166,37 +1717,35 @@ function renderRecentColors() {
 }
 
 
-/* OPEN COLOR PALETTE */
-
 function openColorMenu() {
 
-  const sheetMenu =
+  const parent =
     document.getElementById(
       "sheetMenu"
     );
 
 
-  const colorMenu =
+  const menu =
     document.getElementById(
       "colorMenu"
     );
 
 
   const rect =
-    sheetMenu
+    parent
       .getBoundingClientRect();
 
 
-  colorMenu.hidden =
+  menu.hidden =
     false;
 
 
   const width =
-    colorMenu.offsetWidth;
+    menu.offsetWidth;
 
 
   const height =
-    colorMenu.offsetHeight;
+    menu.offsetHeight;
 
 
   let left =
@@ -2205,47 +1754,34 @@ function openColorMenu() {
     7;
 
 
-  /*
-   * If there isn't room to the left,
-   * open the palette to the right.
-   */
-
   if (left < 5) {
 
     left =
-      Math.min(
-        window.innerWidth -
-          width -
-          5,
-        rect.right + 7
-      );
+      rect.right +
+      7;
 
   }
 
 
-  const top =
-    Math.max(
-      5,
-      Math.min(
-        rect.top,
-        window.innerHeight -
-          height -
-          5
-      )
-    );
-
-
-  colorMenu.style.left =
+  menu.style.left =
     `${Math.max(5, left)}px`;
 
 
-  colorMenu.style.top =
-    `${top}px`;
+  menu.style.top =
+    `${
+      Math.max(
+        5,
+        Math.min(
+          rect.top,
+          window.innerHeight -
+            height -
+            5
+        )
+      )
+    }px`;
 
 }
 
-
-/* APPLY EXCEL TAB COLOR */
 
 async function setTabColor(
   id,
@@ -2255,7 +1791,7 @@ async function setTabColor(
   try {
 
     await Excel.run(
-      async (context) => {
+      async context => {
 
         context.workbook
           .worksheets
@@ -2283,7 +1819,7 @@ async function setTabColor(
 
 
 /* =========================================
-   CUSTOM TASK-PANE DIALOGS
+   CUSTOM DIALOG
    ========================================= */
 
 function setupDialog() {
@@ -2294,13 +1830,10 @@ function setupDialog() {
     )
     .addEventListener(
       "click",
-      () => {
-
+      () =>
         resolveDialog(
           null
-        );
-
-      }
+        )
     );
 
 
@@ -2327,68 +1860,8 @@ function setupDialog() {
       }
     );
 
-
-  document
-    .getElementById(
-      "dialogOverlay"
-    )
-    .addEventListener(
-      "click",
-      (event) => {
-
-        if (
-          event.target.id ===
-          "dialogOverlay"
-        ) {
-
-          resolveDialog(
-            null
-          );
-
-        }
-
-      }
-    );
-
-
-  document
-    .getElementById(
-      "dialogInput"
-    )
-    .addEventListener(
-      "keydown",
-      (event) => {
-
-        if (
-          event.key === "Enter"
-        ) {
-
-          document
-            .getElementById(
-              "dialogConfirm"
-            )
-            .click();
-
-        }
-
-
-        if (
-          event.key === "Escape"
-        ) {
-
-          resolveDialog(
-            null
-          );
-
-        }
-
-      }
-    );
-
 }
 
-
-/* GENERIC DIALOG */
 
 function openDialog(
   title,
@@ -2400,15 +1873,6 @@ function openDialog(
     danger = false
   } = {}
 ) {
-
-  if (dialogResolver) {
-
-    resolveDialog(
-      null
-    );
-
-  }
-
 
   document
     .getElementById(
@@ -2423,7 +1887,7 @@ function openDialog(
       "dialogMessage"
     )
     .textContent =
-      message || "";
+      message;
 
 
   const field =
@@ -2487,7 +1951,7 @@ function openDialog(
 
 
   return new Promise(
-    (resolve) => {
+    resolve => {
 
       dialogResolver =
         resolve;
@@ -2497,8 +1961,6 @@ function openDialog(
 
 }
 
-
-/* RESOLVE DIALOG */
 
 function resolveDialog(
   value
@@ -2531,12 +1993,10 @@ function resolveDialog(
 }
 
 
-/* TEXT ENTRY DIALOG */
-
 function showTextDialog(
   title,
   message,
-  value = ""
+  value
 ) {
 
   return openDialog(
@@ -2544,22 +2004,18 @@ function showTextDialog(
     message,
     {
       input: true,
-      value,
-      confirmText:
-        "OK"
+      value
     }
   );
 
 }
 
 
-/* CONFIRMATION DIALOG */
-
 function showConfirmDialog(
   title,
   message,
-  confirmText = "OK",
-  danger = false
+  confirmText,
+  danger
 ) {
 
   return openDialog(
@@ -2574,27 +2030,8 @@ function showConfirmDialog(
 }
 
 
-/* MESSAGE DIALOG */
-
-async function showMessageDialog(
-  title,
-  message
-) {
-
-  await openDialog(
-    title,
-    message,
-    {
-      confirmText:
-        "OK"
-    }
-  );
-
-}
-
-
 /* =========================================
-   MENU HELPERS
+   HELPERS
    ========================================= */
 
 function handleOutsideClick(
@@ -2604,12 +2041,12 @@ function handleOutsideClick(
   if (
     !event.target.closest(
       "#sheetMenu"
-    ) &&
+    )
+
+    &&
+
     !event.target.closest(
       "#colorMenu"
-    ) &&
-    !event.target.closest(
-      ".more-button"
     )
   ) {
 
@@ -2640,10 +2077,6 @@ function closeMenus() {
 }
 
 
-/* =========================================
-   KEEP ACTIVE SHEET VISIBLE
-   ========================================= */
-
 function scrollActiveIntoView() {
 
   requestAnimationFrame(
@@ -2658,11 +2091,8 @@ function scrollActiveIntoView() {
       if (row) {
 
         row.scrollIntoView({
-          block:
-            "nearest",
-
-          behavior:
-            "smooth"
+          block: "nearest",
+          behavior: "smooth"
         });
 
       }
@@ -2672,10 +2102,6 @@ function scrollActiveIntoView() {
 
 }
 
-
-/* =========================================
-   ERRORS / STATUS
-   ========================================= */
 
 function showError(
   error
@@ -2688,7 +2114,7 @@ function showError(
 
   setStatus(
     error.message ||
-    "Excel operation failed.",
+      "Excel operation failed.",
     true
   );
 

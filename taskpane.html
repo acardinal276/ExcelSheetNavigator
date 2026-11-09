@@ -67,6 +67,7 @@
 
   <section class="controls">
 
+
     <input
       id="search"
       class="search-box"
@@ -76,6 +77,7 @@
 
 
     <div class="control-row">
+
 
       <label>
 
@@ -90,41 +92,48 @@
 
       <select
         id="statusFilter"
-        aria-label="Filter by sign-off status">
+        aria-label="Filter by workflow status">
 
         <option value="all">
-          All sheets
+          All Statuses
         </option>
 
-        <option value="notPrepared">
-          Not prepared
+        <option value="prepared">
+          Prepared
         </option>
 
-        <option value="awaitingReview">
-          Awaiting review
+        <option value="reviewed">
+          Reviewed
         </option>
 
-        <option value="awaitingSigner">
-          Awaiting signer
+        <option value="openItems">
+          Open Items
         </option>
 
-        <option value="complete">
-          Complete
+        <option value="signerReview">
+          Signer Review
+        </option>
+
+        <option value="none">
+          No Status
         </option>
 
       </select>
 
+
     </div>
+
 
   </section>
 
 
 
   <!-- =====================================
-       WORKSHEET COLUMN HEADER
+       WORKSHEET LIST HEADER
        ===================================== -->
 
   <div class="sheet-header">
+
 
     <span>
     </span>
@@ -140,23 +149,10 @@
     </span>
 
 
-    <span class="sign-column">
-      P
+    <span class="status-column">
+      Status
     </span>
 
-
-    <span class="sign-column">
-      R
-    </span>
-
-
-    <span class="sign-column">
-      S
-    </span>
-
-
-    <span>
-    </span>
 
   </div>
 
@@ -169,6 +165,7 @@
   <main
     id="sheetContainer"
     class="sheet-container">
+
 
     <ul id="sheetList">
     </ul>
@@ -183,6 +180,7 @@
 
     </div>
 
+
   </main>
 
 
@@ -193,24 +191,9 @@
 
   <footer>
 
-    <div class="legend">
-
-      <span>
-        <strong>P</strong>
-        Prepared
-      </span>
-
-      <span>
-        <strong>R</strong>
-        Reviewed
-      </span>
-
-      <span>
-        <strong>S</strong>
-        Signer
-      </span>
-
-    </div>
+    <span>
+      ■ Actual Excel tab color
+    </span>
 
   </footer>
 
@@ -220,7 +203,7 @@
 
 
 <!-- =====================================
-     WORKSHEET RIGHT-CLICK / MORE MENU
+     WORKSHEET RIGHT-CLICK MENU
      ===================================== -->
 
 <div
@@ -280,6 +263,90 @@
   </button>
 
 
+  <div class="menu-separator">
+  </div>
+
+
+  <div class="menu-heading">
+    Workflow Status
+  </div>
+
+
+
+  <!-- PREPARED -->
+
+  <button
+    data-action="workflow"
+    data-status="prepared">
+
+    <span class="workflow-dot prepared">
+    </span>
+
+    Prepared
+
+  </button>
+
+
+
+  <!-- REVIEWED -->
+
+  <button
+    data-action="workflow"
+    data-status="reviewed">
+
+    <span class="workflow-dot reviewed">
+    </span>
+
+    Reviewed
+
+  </button>
+
+
+
+  <!-- OPEN ITEMS -->
+
+  <button
+    data-action="workflow"
+    data-status="openItems">
+
+    <span class="workflow-dot open-items">
+    </span>
+
+    Open Items
+
+  </button>
+
+
+
+  <!-- SIGNER REVIEW -->
+
+  <button
+    data-action="workflow"
+    data-status="signerReview">
+
+    <span class="workflow-dot signer-review">
+    </span>
+
+    Signer Review
+
+  </button>
+
+
+
+  <!-- CLEAR STATUS -->
+
+  <button
+    data-action="workflow"
+    data-status="none">
+
+    <span class="workflow-dot no-status">
+    </span>
+
+    Clear Status
+
+  </button>
+
+
 </div>
 
 
@@ -302,7 +369,6 @@
       Theme Colors
     </h3>
 
-
     <div
       id="themeColors"
       class="color-grid theme-grid">
@@ -319,7 +385,6 @@
     <h3>
       Standard Colors
     </h3>
-
 
     <div
       id="standardColors"
@@ -338,7 +403,6 @@
       Recent Colors
     </h3>
 
-
     <div
       id="recentColors"
       class="color-grid recent-grid">
@@ -348,20 +412,11 @@
 
 
 
-  <div class="palette-separator">
-  </div>
-
-
-
   <!-- NO COLOR -->
 
   <button
     id="noColor"
     class="palette-command">
-
-    <span class="no-color-icon">
-      ╱
-    </span>
 
     No Color
 
@@ -375,16 +430,10 @@
     id="moreColors"
     class="palette-command">
 
-    <span>
-      🎨
-    </span>
-
     More Colors...
 
   </button>
 
-
-  <!-- Native HTML color picker -->
 
   <input
     id="moreColorsInput"
@@ -399,8 +448,7 @@
 <!-- =====================================
      CUSTOM DIALOG
 
-     Replaces browser prompt() / confirm()
-     for Insert, Rename and Delete.
+     Used for Insert / Rename / Delete.
      ===================================== -->
 
 <div

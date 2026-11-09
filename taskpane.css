@@ -28,8 +28,6 @@ select {
    ========================================= */
 
 .app {
-  position: relative;
-
   height: 100vh;
   min-height: 0;
 
@@ -47,98 +45,120 @@ select {
 
 
 /* =========================================
-   COLLAPSE / EXPAND TOGGLE
-   ========================================= */
-
-.collapse-toggle {
-  position: absolute;
-
-  z-index: 100;
-
-  left: 0;
-  top: 50%;
-
-  transform: translateY(-50%);
-
-  width: 16px;
-  height: 52px;
-
-  padding: 0;
-
-  border: 1px solid #c8c6c4;
-  border-left: 0;
-
-  border-radius: 0 4px 4px 0;
-
-  background: #f3f2f1;
-  color: #605e5c;
-
-  font-size: 17px;
-
-  cursor: pointer;
-}
-
-.collapse-toggle:hover {
-  background: #e1dfdd;
-  color: #0f6cbd;
-}
-
-
-/* =========================================
-   INTERNAL COLLAPSED MODE
-
-   Excel still controls the outer task-pane
-   width. This collapses our navigator UI.
-   ========================================= */
-
-.app.collapsed .navigator-content {
-  visibility: hidden;
-}
-
-.app.collapsed .collapse-toggle {
-  visibility: visible;
-}
-
-
-/* =========================================
    HEADER
    ========================================= */
 
 .app-header {
   flex: 0 0 auto;
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: grid;
 
-  padding:
-    8px
-    10px
-    8px
-    22px;
+  grid-template-columns:
+    28px
+    minmax(0, 1fr)
+    28px;
+
+  align-items: center;
+
+  gap: 5px;
+
+  padding: 7px 8px;
 
   background: #0f6cbd;
   color: #ffffff;
 }
 
-.app-header h1 {
+
+/* =========================================
+   COLLAPSE / EXPAND BUTTON
+
+   Located INSIDE the blue header.
+   It no longer overlaps Excel's native
+   left-edge task-pane resize boundary.
+   ========================================= */
+
+.collapse-toggle {
+  width: 28px;
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 4px;
+
+  background:
+    rgba(255, 255, 255, 0.15);
+
+  color: #ffffff;
+
+  font-size: 20px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.collapse-toggle:hover {
+  background:
+    rgba(255, 255, 255, 0.27);
+}
+
+.collapse-toggle:focus-visible {
+  outline:
+    2px solid #ffffff;
+
+  outline-offset: 1px;
+}
+
+
+/* =========================================
+   HEADER TITLE
+   ========================================= */
+
+.header-title {
+  min-width: 0;
+}
+
+.header-title h1 {
   margin: 0;
+
+  overflow: hidden;
 
   font-size: 15px;
   font-weight: 600;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.app-header p {
+.header-title p {
   margin: 1px 0 0;
 
+  overflow: hidden;
+
   font-size: 10px;
+
+  white-space: nowrap;
+  text-overflow: ellipsis;
 
   opacity: 0.9;
 }
 
+
+/* =========================================
+   REFRESH BUTTON
+   ========================================= */
+
 .header-button {
   width: 28px;
   height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   padding: 0;
 
@@ -157,7 +177,37 @@ select {
 
 .header-button:hover {
   background:
-    rgba(255, 255, 255, 0.25);
+    rgba(255, 255, 255, 0.27);
+}
+
+
+/* =========================================
+   COLLAPSED NAVIGATOR
+
+   Excel still owns the outer Office pane.
+   This collapses our content while leaving
+   the header toggle visible.
+   ========================================= */
+
+.app.collapsed .app-header {
+  grid-template-columns: 28px;
+
+  width: 44px;
+
+  padding: 7px 8px;
+}
+
+.app.collapsed .header-title,
+.app.collapsed .header-button,
+.app.collapsed .controls,
+.app.collapsed .sheet-header,
+.app.collapsed .sheet-container,
+.app.collapsed footer {
+  display: none;
+}
+
+.app.collapsed .collapse-toggle {
+  display: flex;
 }
 
 
@@ -168,11 +218,7 @@ select {
 .controls {
   flex: 0 0 auto;
 
-  padding:
-    7px
-    8px
-    7px
-    22px;
+  padding: 7px 8px;
 
   border-bottom:
     1px solid #e1dfdd;
@@ -223,7 +269,7 @@ select {
 
 .control-row select {
   min-width: 0;
-  max-width: 145px;
+  max-width: 150px;
 
   padding: 3px 5px;
 
@@ -239,7 +285,7 @@ select {
 /* =========================================
    WORKSHEET HEADER
 
-   There is intentionally no Status column.
+   No separate Status column.
    ========================================= */
 
 .sheet-header {
@@ -255,11 +301,7 @@ select {
 
   min-height: 24px;
 
-  padding:
-    0
-    6px
-    0
-    22px;
+  padding: 0 6px;
 
   border-bottom:
     1px solid #e1dfdd;
@@ -275,6 +317,8 @@ select {
 }
 
 .sheet-column {
+  min-width: 0;
+
   overflow: hidden;
 
   white-space: nowrap;
@@ -338,8 +382,8 @@ select {
 /* =========================================
    WORKSHEET ROW
 
-   The worksheet column receives all remaining
-   width as the Office task pane is resized.
+   Worksheet name receives all available
+   horizontal space.
    ========================================= */
 
 .sheet-row {
@@ -353,11 +397,7 @@ select {
 
   min-height: 25px;
 
-  padding:
-    0
-    6px
-    0
-    22px;
+  padding: 0 6px;
 
   border-left:
     3px solid transparent;
@@ -378,9 +418,6 @@ select {
 
 /* =========================================
    ACTIVE WORKSHEET
-
-   Blue stripe remains separate from workflow
-   status.
    ========================================= */
 
 .sheet-row.active {
@@ -397,42 +434,42 @@ select {
    ========================================= */
 
 
-/* PREPARED - GREEN */
+/* PREPARED */
 
 .sheet-row.status-prepared {
   background: #e3f4e3;
 }
 
 
-/* OPEN ITEMS - YELLOW */
+/* OPEN ITEMS */
 
 .sheet-row.status-openItems {
   background: #fff4ce;
 }
 
 
-/* POINTS POSTED - ORANGE */
+/* POINTS POSTED */
 
 .sheet-row.status-pointsPosted {
   background: #fde6d2;
 }
 
 
-/* POINTS CLEARED - TEAL */
+/* POINTS CLEARED */
 
 .sheet-row.status-pointsCleared {
   background: #d9f1f2;
 }
 
 
-/* REVIEWED - BLUE */
+/* REVIEWED */
 
 .sheet-row.status-reviewed {
   background: #dcecf8;
 }
 
 
-/* SIGNER REVIEW - RED */
+/* SIGNER REVIEW */
 
 .sheet-row.status-signerReview {
   background: #fde1e3;
@@ -471,7 +508,6 @@ select {
 
 .sheet-button {
   min-width: 0;
-
   width: 100%;
 
   display: flex;
@@ -501,8 +537,6 @@ select {
 
 /* =========================================
    ACTUAL EXCEL TAB COLOR
-
-   This square stays separate from workflow.
    ========================================= */
 
 .tab-color {
@@ -562,11 +596,7 @@ select {
    ========================================= */
 
 .empty-message {
-  padding:
-    25px
-    10px
-    25px
-    22px;
+  padding: 25px 10px;
 
   color: #605e5c;
 
@@ -581,11 +611,7 @@ select {
 footer {
   flex: 0 0 auto;
 
-  padding:
-    5px
-    8px
-    5px
-    22px;
+  padding: 5px 8px;
 
   border-top:
     1px solid #e1dfdd;
@@ -676,6 +702,16 @@ footer {
 }
 
 
+/* CURRENT WORKFLOW STATUS */
+
+.sheet-menu
+.current-workflow-status {
+  background: #f3f2f1;
+
+  font-weight: 600;
+}
+
+
 /* =========================================
    WORKFLOW DOTS
    ========================================= */
@@ -693,50 +729,29 @@ footer {
   border-radius: 50%;
 }
 
-
-/* PREPARED */
-
 .workflow-dot.prepared {
   background: #13a10e;
 }
-
-
-/* OPEN ITEMS */
 
 .workflow-dot.open-items {
   background: #f9c80e;
 }
 
-
-/* POINTS POSTED */
-
 .workflow-dot.points-posted {
   background: #f28c28;
 }
-
-
-/* POINTS CLEARED */
 
 .workflow-dot.points-cleared {
   background: #19a7ae;
 }
 
-
-/* REVIEWED */
-
 .workflow-dot.reviewed {
   background: #0078d4;
 }
 
-
-/* SIGNER REVIEW */
-
 .workflow-dot.signer-review {
   background: #e81123;
 }
-
-
-/* NO STATUS */
 
 .workflow-dot.no-status {
   background: #ffffff;
@@ -888,6 +903,7 @@ footer {
   margin: 0 0 8px;
 
   font-size: 16px;
+  font-weight: 600;
 }
 
 .dialog-box p {
@@ -909,6 +925,15 @@ footer {
     1px solid #8a8886;
 
   border-radius: 3px;
+
+  outline: none;
+}
+
+.dialog-input:focus {
+  border-color: #0f6cbd;
+
+  box-shadow:
+    0 0 0 1px #0f6cbd;
 }
 
 .dialog-actions {
@@ -927,6 +952,12 @@ footer {
   border-radius: 3px;
 
   background: #ffffff;
+
+  cursor: pointer;
+}
+
+.dialog-actions button:hover {
+  background: #f3f2f1;
 }
 
 .dialog-actions .primary-button {
@@ -948,14 +979,30 @@ footer {
 
 /* =========================================
    RESPONSIVE NARROW PANE
-
-   Native Excel pane resizing determines the
-   actual width. Our content simply contracts.
    ========================================= */
 
 @media (max-width: 220px) {
 
-  .app-header h1 {
+  .app-header {
+    grid-template-columns:
+      24px
+      minmax(0, 1fr)
+      24px;
+
+    gap: 3px;
+
+    padding:
+      6px
+      4px;
+  }
+
+  .collapse-toggle,
+  .header-button {
+    width: 24px;
+    height: 24px;
+  }
+
+  .header-title h1 {
     font-size: 13px;
   }
 
@@ -966,9 +1013,8 @@ footer {
   }
 
   .control-row select {
-    max-width: none;
-
     width: 100%;
+    max-width: none;
   }
 
   .sheet-header,
@@ -998,24 +1044,22 @@ footer {
 
 @media (max-width: 150px) {
 
-  .app-header {
-    padding-right: 4px;
+  .header-title h1 {
+    font-size: 11px;
   }
 
-  .app-header h1 {
-    font-size: 11px;
+  .header-title p {
+    display: none;
   }
 
   .header-button {
     display: none;
   }
 
-  .controls {
-    padding-right: 4px;
-  }
-
-  .sheet-row {
-    padding-right: 3px;
+  .app-header {
+    grid-template-columns:
+      24px
+      minmax(0, 1fr);
   }
 
   footer {
@@ -1034,3 +1078,4 @@ footer {
 [hidden] {
   display: none !important;
 }
+`

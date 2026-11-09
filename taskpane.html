@@ -30,29 +30,6 @@
   class="app">
 
 
-  <!-- =====================================
-       COLLAPSE / EXPAND TOGGLE
-
-       This stays on the left edge of the
-       Sheet Navigator.
-       ===================================== -->
-
-  <button
-    id="collapseToggle"
-    class="collapse-toggle"
-    title="Collapse Sheet Navigator"
-    aria-label="Collapse Sheet Navigator">
-
-    ‹
-
-  </button>
-
-
-
-  <!-- =====================================
-       NAVIGATOR CONTENT
-       ===================================== -->
-
   <div
     id="navigatorContent"
     class="navigator-content">
@@ -64,7 +41,19 @@
 
     <header class="app-header">
 
-      <div>
+
+      <button
+        id="collapseToggle"
+        class="collapse-toggle"
+        title="Collapse Sheet Navigator"
+        aria-label="Collapse Sheet Navigator">
+
+        ‹
+
+      </button>
+
+
+      <div class="header-title">
 
         <h1>
           Sheet Navigator
@@ -86,6 +75,7 @@
         ↻
 
       </button>
+
 
     </header>
 
@@ -178,8 +168,8 @@
     <!-- =====================================
          WORKSHEET LIST HEADER
 
-         Status column intentionally removed.
-         Entire row color communicates status.
+         No separate Status column.
+         Row color communicates workflow.
          ===================================== -->
 
     <div class="sheet-header">
@@ -315,119 +305,86 @@
   </div>
 
 
-  <!-- =====================================
-       WORKFLOW STATUS
-       ===================================== -->
-
   <div class="menu-heading">
     Workflow Status
   </div>
 
 
-
-  <!-- PREPARED -->
-
   <button
     data-action="workflow"
     data-status="prepared">
 
-    <span class="workflow-dot prepared">
-    </span>
+    <span class="workflow-dot prepared"></span>
 
     Prepared
 
   </button>
 
 
-
-  <!-- OPEN ITEMS -->
-
   <button
     data-action="workflow"
     data-status="openItems">
 
-    <span class="workflow-dot open-items">
-    </span>
+    <span class="workflow-dot open-items"></span>
 
     Open Items
 
   </button>
 
 
-
-  <!-- POINTS POSTED -->
-
   <button
     data-action="workflow"
     data-status="pointsPosted">
 
-    <span class="workflow-dot points-posted">
-    </span>
+    <span class="workflow-dot points-posted"></span>
 
     Points Posted
 
   </button>
 
 
-
-  <!-- POINTS CLEARED -->
-
   <button
     data-action="workflow"
     data-status="pointsCleared">
 
-    <span class="workflow-dot points-cleared">
-    </span>
+    <span class="workflow-dot points-cleared"></span>
 
     Points Cleared
 
   </button>
 
 
-
-  <!-- REVIEWED -->
-
   <button
     data-action="workflow"
     data-status="reviewed">
 
-    <span class="workflow-dot reviewed">
-    </span>
+    <span class="workflow-dot reviewed"></span>
 
     Reviewed
 
   </button>
 
 
-
-  <!-- SIGNER REVIEW -->
-
   <button
     data-action="workflow"
     data-status="signerReview">
 
-    <span class="workflow-dot signer-review">
-    </span>
+    <span class="workflow-dot signer-review"></span>
 
     Signer Review
 
   </button>
 
 
-
   <div class="menu-separator">
   </div>
 
-
-
-  <!-- CLEAR STATUS -->
 
   <button
     data-action="workflow"
     data-status="none">
 
-    <span class="workflow-dot no-status">
-    </span>
+    <span class="workflow-dot no-status"></span>
 
     Clear Status
 
@@ -462,7 +419,6 @@
   </section>
 
 
-
   <section>
 
     <h3>
@@ -475,7 +431,6 @@
     </div>
 
   </section>
-
 
 
   <section>
@@ -492,7 +447,6 @@
   </section>
 
 
-
   <button
     id="noColor"
     class="palette-command">
@@ -500,7 +454,6 @@
     No Color
 
   </button>
-
 
 
   <button
@@ -524,8 +477,6 @@
 
 <!-- =====================================
      CUSTOM DIALOG
-
-     Used by Insert / Rename / Delete.
      ===================================== -->
 
 <div
@@ -541,12 +492,10 @@
     aria-labelledby="dialogTitle">
 
 
-    <h2 id="dialogTitle">
-    </h2>
+    <h2 id="dialogTitle"></h2>
 
 
-    <p id="dialogMessage">
-    </p>
+    <p id="dialogMessage"></p>
 
 
     <input
@@ -583,11 +532,7 @@
 
 
 
-<!-- =====================================
-     JAVASCRIPT
-     ===================================== -->
-
-<script src="taskpane.js?v=collapse1">
+<script src="taskpane.js">
 </script>
 
 

@@ -1,41 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0">
 
   <title>Excel Sheet Navigator</title>
 
-  <link rel="stylesheet" href="taskpane.css">
+  <link
+    rel="stylesheet"
+    href="taskpane.css">
 
-  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script
+    src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js">
+  </script>
+
 </head>
+
 
 <body>
 
+
 <div class="app">
 
-  <!-- HEADER -->
+
+  <!-- =====================================
+       HEADER
+       ===================================== -->
+
   <header class="app-header">
 
     <div>
-      <h1>Sheet Navigator</h1>
-      <p id="status">Connecting to Excel...</p>
+
+      <h1>
+        Sheet Navigator
+      </h1>
+
+      <p id="status">
+        Connecting to Excel...
+      </p>
+
     </div>
+
 
     <button
       id="refresh"
       class="header-button"
       title="Refresh worksheets"
       aria-label="Refresh worksheets">
+
       ↻
+
     </button>
 
   </header>
 
 
-  <!-- CONTROLS -->
+
+  <!-- =====================================
+       SEARCH AND FILTERS
+       ===================================== -->
+
   <section class="controls">
+
 
     <input
       id="search"
@@ -44,14 +74,20 @@
       placeholder="Search worksheets..."
       aria-label="Search worksheets">
 
+
     <div class="control-row">
 
+
       <label>
+
         <input
           id="showHidden"
           type="checkbox">
+
         Hidden
+
       </label>
+
 
       <select
         id="statusFilter"
@@ -79,36 +115,70 @@
 
       </select>
 
+
     </div>
+
 
   </section>
 
 
-  <!-- COLUMN HEADER -->
+
+  <!-- =====================================
+       WORKSHEET COLUMN HEADER
+       ===================================== -->
+
   <div class="sheet-header">
 
-    <span class="drag-column"></span>
 
-    <span class="sheet-column">
-      Worksheets
-      <span id="count"></span>
+    <span class="drag-column">
     </span>
 
-    <span class="sign-column">P</span>
-    <span class="sign-column">R</span>
-    <span class="sign-column">S</span>
 
-    <span class="menu-column"></span>
+    <span class="sheet-column">
+
+      Worksheets
+
+      <span id="count">
+      </span>
+
+    </span>
+
+
+    <span class="sign-column">
+      P
+    </span>
+
+
+    <span class="sign-column">
+      R
+    </span>
+
+
+    <span class="sign-column">
+      S
+    </span>
+
+
+    <span class="menu-column">
+    </span>
+
 
   </div>
 
 
-  <!-- SCROLLABLE SHEET AREA -->
+
+  <!-- =====================================
+       SCROLLABLE WORKSHEET LIST
+       ===================================== -->
+
   <main
     id="sheetContainer"
     class="sheet-container">
 
-    <ul id="sheetList"></ul>
+
+    <ul id="sheetList">
+    </ul>
+
 
     <div
       id="empty"
@@ -119,63 +189,146 @@
 
     </div>
 
+
   </main>
 
 
-  <!-- LEGEND -->
+
+  <!-- =====================================
+       FOOTER / LEGEND
+       ===================================== -->
+
   <footer>
+
 
     <div class="legend">
 
-      <span>
-        <strong>P</strong> Prepared
-      </span>
 
       <span>
-        <strong>R</strong> Reviewed
+
+        <strong>
+          P
+        </strong>
+
+        Prepared
+
       </span>
 
+
       <span>
-        <strong>S</strong> Signer
+
+        <strong>
+          R
+        </strong>
+
+        Reviewed
+
       </span>
+
+
+      <span>
+
+        <strong>
+          S
+        </strong>
+
+        Signer
+
+      </span>
+
 
     </div>
 
+
   </footer>
+
 
 </div>
 
 
-<!-- SHEET ACTION MENU -->
+
+<!-- =====================================
+     WORKSHEET MENU
+
+     This single menu is used by BOTH:
+
+     • Right-clicking a worksheet row
+     • Clicking the ⋯ button
+     ===================================== -->
+
 <div
   id="sheetMenu"
   class="sheet-menu"
   hidden>
 
+
   <button data-action="activate">
     Open
   </button>
 
-  <button data-action="rename">
-    Rename
+
+  <div class="menu-separator">
+  </div>
+
+
+  <button data-action="insert">
+    Insert Sheet
   </button>
 
-  <button data-action="color">
-    Tab color
+
+  <button data-action="duplicate">
+    Duplicate Sheet
   </button>
+
+
+  <button
+    data-action="delete"
+    class="danger-action">
+
+    Delete Sheet
+
+  </button>
+
+
+  <div class="menu-separator">
+  </div>
+
+
+  <button data-action="rename">
+    Rename Sheet
+  </button>
+
 
   <button data-action="visibility">
-    Hide
+    Hide Sheet
   </button>
+
+
+  <div class="menu-separator">
+  </div>
+
+
+  <button data-action="color">
+    Tab Color ›
+  </button>
+
 
 </div>
 
 
-<!-- COLOR PICKER -->
+
+<!-- =====================================
+     EXCEL TAB COLOR PICKER
+
+     This changes the actual Excel
+     worksheet tab color.
+     ===================================== -->
+
 <div
   id="colorMenu"
   class="color-menu"
   hidden>
+
 
   <button
     class="color-choice red"
@@ -183,11 +336,13 @@
     title="Red">
   </button>
 
+
   <button
     class="color-choice orange"
     data-color="#F7630C"
     title="Orange">
   </button>
+
 
   <button
     class="color-choice yellow"
@@ -195,11 +350,13 @@
     title="Yellow">
   </button>
 
+
   <button
     class="color-choice green"
     data-color="#13A10E"
     title="Green">
   </button>
+
 
   <button
     class="color-choice blue"
@@ -207,23 +364,35 @@
     title="Blue">
   </button>
 
+
   <button
     class="color-choice purple"
     data-color="#886CE4"
     title="Purple">
   </button>
 
+
   <button
     class="color-choice none"
     data-color=""
     title="Remove tab color">
+
     ×
+
   </button>
+
 
 </div>
 
 
-<script src="taskpane.js"></script>
+
+<!-- =====================================
+     JAVASCRIPT
+     ===================================== -->
+
+<script src="taskpane.js">
+</script>
+
 
 </body>
 </html>

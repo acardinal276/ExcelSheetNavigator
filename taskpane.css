@@ -22,18 +22,28 @@ select {
   font: inherit;
 }
 
+
+/* =============================
+   APP
+   ============================= */
+
 .app {
   height: 100vh;
+
   display: flex;
   flex-direction: column;
+
   min-height: 0;
 }
 
 
-/* HEADER */
+/* =============================
+   HEADER
+   ============================= */
 
 .app-header {
   flex: 0 0 auto;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -41,18 +51,21 @@ select {
   padding: 8px 10px;
 
   background: #0f6cbd;
-  color: white;
+  color: #ffffff;
 }
 
 .app-header h1 {
   margin: 0;
+
   font-size: 15px;
   font-weight: 600;
 }
 
 .app-header p {
   margin: 1px 0 0;
+
   font-size: 10px;
+
   opacity: 0.9;
 }
 
@@ -65,8 +78,8 @@ select {
   border: 0;
   border-radius: 4px;
 
-  background: rgba(255,255,255,0.15);
-  color: white;
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 
   font-size: 18px;
 
@@ -74,11 +87,13 @@ select {
 }
 
 .header-button:hover {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 
-/* CONTROLS */
+/* =============================
+   SEARCH AND FILTERS
+   ============================= */
 
 .controls {
   flex: 0 0 auto;
@@ -101,7 +116,9 @@ select {
 
 .search-box:focus {
   border-color: #0f6cbd;
-  box-shadow: 0 0 0 1px #0f6cbd;
+
+  box-shadow:
+    0 0 0 1px #0f6cbd;
 }
 
 .control-row {
@@ -119,6 +136,7 @@ select {
 .control-row label {
   display: flex;
   align-items: center;
+
   gap: 4px;
 }
 
@@ -130,11 +148,13 @@ select {
   border: 1px solid #c8c6c4;
   border-radius: 3px;
 
-  background: white;
+  background: #ffffff;
 }
 
 
-/* WORKSHEET COLUMN HEADER */
+/* =============================
+   WORKSHEET COLUMN HEADER
+   ============================= */
 
 .sheet-header {
   flex: 0 0 auto;
@@ -169,6 +189,7 @@ select {
 
 .sheet-column {
   overflow: hidden;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -186,10 +207,13 @@ select {
 }
 
 
-/* SCROLLABLE AREA */
+/* =============================
+   SCROLLABLE AREA
+   ============================= */
 
 .sheet-container {
   flex: 1 1 auto;
+
   min-height: 0;
 
   overflow-y: auto;
@@ -206,18 +230,20 @@ select {
 }
 
 .sheet-container::-webkit-scrollbar-thumb {
-  background: #c8c6c4;
-
-  border: 2px solid white;
+  border: 2px solid #ffffff;
   border-radius: 8px;
+
+  background: #c8c6c4;
 }
 
 .sheet-container::-webkit-scrollbar-track {
-  background: white;
+  background: #ffffff;
 }
 
 
-/* WORKSHEET LIST */
+/* =============================
+   WORKSHEET LIST
+   ============================= */
 
 #sheetList {
   margin: 0;
@@ -227,7 +253,9 @@ select {
 }
 
 
-/* WORKSHEET ROW */
+/* =============================
+   WORKSHEET ROW
+   ============================= */
 
 .sheet-row {
   display: grid;
@@ -249,7 +277,7 @@ select {
   border-left: 3px solid transparent;
   border-bottom: 1px solid #f3f2f1;
 
-  background: white;
+  background: #ffffff;
 
   user-select: none;
 }
@@ -259,13 +287,15 @@ select {
 }
 
 .sheet-row.active {
-  background: #e5f1fb;
-
   border-left-color: #0f6cbd;
+
+  background: #e5f1fb;
 }
 
 
-/* DRAG HANDLE */
+/* =============================
+   DRAG HANDLE
+   ============================= */
 
 .drag-handle {
   color: #a19f9d;
@@ -280,13 +310,16 @@ select {
 }
 
 
-/* SHEET BUTTON */
+/* =============================
+   WORKSHEET BUTTON
+   ============================= */
 
 .sheet-button {
   min-width: 0;
 
   display: flex;
   align-items: center;
+
   gap: 5px;
 
   height: 24px;
@@ -309,7 +342,9 @@ select {
 }
 
 
-/* TAB COLOR */
+/* =============================
+   ACTUAL EXCEL TAB COLOR
+   ============================= */
 
 .tab-color {
   width: 8px;
@@ -317,13 +352,16 @@ select {
 
   flex: 0 0 8px;
 
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 2px;
 
   background: #c8c6c4;
 }
 
 
-/* SHEET NAME */
+/* =============================
+   WORKSHEET NAME
+   ============================= */
 
 .sheet-name {
   min-width: 0;
@@ -339,7 +377,9 @@ select {
 }
 
 
-/* HIDDEN SHEETS */
+/* =============================
+   HIDDEN WORKSHEETS
+   ============================= */
 
 .sheet-row.hidden-sheet {
   opacity: 0.55;
@@ -354,14 +394,15 @@ select {
 }
 
 
-/* SIGN-OFF BUTTONS */
+/* =============================
+   SIGN-OFF BUTTONS
+   ============================= */
 
 .signoff {
   width: 20px;
   height: 20px;
 
   margin: auto;
-
   padding: 0;
 
   border: 1px solid transparent;
@@ -380,7 +421,7 @@ select {
 .signoff:hover {
   border-color: #c8c6c4;
 
-  background: white;
+  background: #ffffff;
 }
 
 .signoff.signed {
@@ -390,7 +431,9 @@ select {
 }
 
 
-/* ACTION MENU */
+/* =============================
+   MORE BUTTON
+   ============================= */
 
 .more-button {
   width: 22px;
@@ -413,7 +456,9 @@ select {
 }
 
 
-/* DRAGGING */
+/* =============================
+   DRAGGING
+   ============================= */
 
 .sheet-row.dragging {
   opacity: 0.4;
@@ -424,7 +469,9 @@ select {
 }
 
 
-/* EMPTY MESSAGE */
+/* =============================
+   EMPTY MESSAGE
+   ============================= */
 
 .empty-message {
   padding: 25px 10px;
@@ -435,7 +482,9 @@ select {
 }
 
 
-/* FOOTER */
+/* =============================
+   FOOTER
+   ============================= */
 
 footer {
   flex: 0 0 auto;
@@ -454,33 +503,32 @@ footer {
 .legend {
   display: flex;
   justify-content: space-between;
+
   gap: 8px;
 }
 
 
-/* POPUP MENUS */
+/* =============================
+   WORKSHEET CONTEXT MENU
+   ============================= */
 
-.sheet-menu,
-.color-menu {
+.sheet-menu {
   position: fixed;
 
   z-index: 1000;
+
+  min-width: 175px;
 
   padding: 4px;
 
   border: 1px solid #c8c6c4;
   border-radius: 4px;
 
-  background: white;
+  background: #ffffff;
 
-  box-shadow: 0 3px 8px rgba(0,0,0,0.18);
-}
-
-
-/* SHEET MENU */
-
-.sheet-menu {
-  min-width: 120px;
+  box-shadow:
+    0 4px 14px
+    rgba(0, 0, 0, 0.20);
 }
 
 .sheet-menu button {
@@ -488,11 +536,13 @@ footer {
 
   width: 100%;
 
-  padding: 5px 8px;
+  padding: 6px 9px;
 
   border: 0;
+  border-radius: 2px;
 
-  background: white;
+  background: #ffffff;
+  color: #242424;
 
   text-align: left;
 
@@ -503,24 +553,60 @@ footer {
   background: #f3f2f1;
 }
 
+.sheet-menu .danger-action {
+  color: #a4262c;
+}
 
-/* COLOR MENU */
+.menu-separator {
+  height: 1px;
+
+  margin: 4px;
+
+  background: #e1dfdd;
+}
+
+
+/* =============================
+   TAB COLOR PICKER
+   ============================= */
 
 .color-menu {
+  position: fixed;
+
+  z-index: 1010;
+
   display: flex;
+
   gap: 5px;
+
+  padding: 5px;
+
+  border: 1px solid #c8c6c4;
+  border-radius: 4px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 4px 14px
+    rgba(0, 0, 0, 0.20);
 }
 
 .color-choice {
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
 
   padding: 0;
 
-  border: 1px solid #c8c6c4;
+  border: 1px solid
+    rgba(0, 0, 0, 0.25);
+
   border-radius: 3px;
 
   cursor: pointer;
+}
+
+.color-choice:hover {
+  transform: scale(1.08);
 }
 
 .color-choice.red {
@@ -548,9 +634,18 @@ footer {
 }
 
 .color-choice.none {
-  background: white;
+  background: #ffffff;
 
   color: #605e5c;
 
-  font-weight: bold;
+  font-weight: 600;
+}
+
+
+/* =============================
+   HIDDEN UI ELEMENTS
+   ============================= */
+
+[hidden] {
+  display: none !important;
 }

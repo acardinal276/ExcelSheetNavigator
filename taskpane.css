@@ -28,12 +28,75 @@ select {
    ========================================= */
 
 .app {
+  position: relative;
+
   height: 100vh;
+  min-height: 0;
+
+  background: #ffffff;
+}
+
+.navigator-content {
+  height: 100%;
 
   display: flex;
   flex-direction: column;
 
   min-height: 0;
+}
+
+
+/* =========================================
+   COLLAPSE / EXPAND TOGGLE
+   ========================================= */
+
+.collapse-toggle {
+  position: absolute;
+
+  z-index: 100;
+
+  left: 0;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  width: 16px;
+  height: 52px;
+
+  padding: 0;
+
+  border: 1px solid #c8c6c4;
+  border-left: 0;
+
+  border-radius: 0 4px 4px 0;
+
+  background: #f3f2f1;
+  color: #605e5c;
+
+  font-size: 17px;
+
+  cursor: pointer;
+}
+
+.collapse-toggle:hover {
+  background: #e1dfdd;
+  color: #0f6cbd;
+}
+
+
+/* =========================================
+   INTERNAL COLLAPSED MODE
+
+   Excel still controls the outer task-pane
+   width. This collapses our navigator UI.
+   ========================================= */
+
+.app.collapsed .navigator-content {
+  visibility: hidden;
+}
+
+.app.collapsed .collapse-toggle {
+  visibility: visible;
 }
 
 
@@ -45,10 +108,14 @@ select {
   flex: 0 0 auto;
 
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 
-  padding: 8px 10px;
+  padding:
+    8px
+    10px
+    8px
+    22px;
 
   background: #0f6cbd;
   color: #ffffff;
@@ -78,7 +145,9 @@ select {
   border: 0;
   border-radius: 4px;
 
-  background: rgba(255, 255, 255, 0.15);
+  background:
+    rgba(255, 255, 255, 0.15);
+
   color: #ffffff;
 
   font-size: 18px;
@@ -87,7 +156,8 @@ select {
 }
 
 .header-button:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background:
+    rgba(255, 255, 255, 0.25);
 }
 
 
@@ -98,9 +168,14 @@ select {
 .controls {
   flex: 0 0 auto;
 
-  padding: 7px 8px;
+  padding:
+    7px
+    8px
+    7px
+    22px;
 
-  border-bottom: 1px solid #e1dfdd;
+  border-bottom:
+    1px solid #e1dfdd;
 }
 
 .search-box {
@@ -108,7 +183,9 @@ select {
 
   padding: 5px 7px;
 
-  border: 1px solid #8a8886;
+  border:
+    1px solid #8a8886;
+
   border-radius: 3px;
 
   background: #ffffff;
@@ -140,14 +217,19 @@ select {
   align-items: center;
 
   gap: 4px;
+
+  white-space: nowrap;
 }
 
 .control-row select {
+  min-width: 0;
   max-width: 145px;
 
   padding: 3px 5px;
 
-  border: 1px solid #c8c6c4;
+  border:
+    1px solid #c8c6c4;
+
   border-radius: 3px;
 
   background: #ffffff;
@@ -155,7 +237,9 @@ select {
 
 
 /* =========================================
-   WORKSHEET COLUMN HEADER
+   WORKSHEET HEADER
+
+   There is intentionally no Status column.
    ========================================= */
 
 .sheet-header {
@@ -165,16 +249,20 @@ select {
 
   grid-template-columns:
     18px
-    minmax(0, 1fr)
-    auto;
+    minmax(0, 1fr);
 
   align-items: center;
 
   min-height: 24px;
 
-  padding: 0 6px;
+  padding:
+    0
+    6px
+    0
+    22px;
 
-  border-bottom: 1px solid #e1dfdd;
+  border-bottom:
+    1px solid #e1dfdd;
 
   background: #faf9f8;
 
@@ -201,12 +289,6 @@ select {
   font-weight: 400;
 }
 
-.status-column {
-  padding-right: 4px;
-
-  text-align: right;
-}
-
 
 /* =========================================
    SCROLLABLE WORKSHEET AREA
@@ -224,11 +306,13 @@ select {
 }
 
 .sheet-container::-webkit-scrollbar {
-  width: 9px;
+  width: 8px;
 }
 
 .sheet-container::-webkit-scrollbar-thumb {
-  border: 2px solid #ffffff;
+  border:
+    2px solid #ffffff;
+
   border-radius: 8px;
 
   background: #c8c6c4;
@@ -253,6 +337,9 @@ select {
 
 /* =========================================
    WORKSHEET ROW
+
+   The worksheet column receives all remaining
+   width as the Office task pane is resized.
    ========================================= */
 
 .sheet-row {
@@ -260,17 +347,24 @@ select {
 
   grid-template-columns:
     18px
-    minmax(0, 1fr)
-    auto;
+    minmax(0, 1fr);
 
   align-items: center;
 
   min-height: 25px;
 
-  padding: 0 6px;
+  padding:
+    0
+    6px
+    0
+    22px;
 
-  border-left: 3px solid transparent;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  border-left:
+    3px solid transparent;
+
+  border-bottom:
+    1px solid
+    rgba(0, 0, 0, 0.05);
 
   background: #ffffff;
 
@@ -285,8 +379,8 @@ select {
 /* =========================================
    ACTIVE WORKSHEET
 
-   Blue left edge is independent of workflow
-   status color.
+   Blue stripe remains separate from workflow
+   status.
    ========================================= */
 
 .sheet-row.active {
@@ -300,27 +394,48 @@ select {
 
 /* =========================================
    WORKFLOW STATUS COLORS
-
-   Prepared      = Green
-   Reviewed      = Blue
-   Open Items    = Yellow
-   Signer Review = Red
    ========================================= */
 
+
+/* PREPARED - GREEN */
+
 .sheet-row.status-prepared {
-  background: #e7f6e7;
+  background: #e3f4e3;
 }
 
-.sheet-row.status-reviewed {
-  background: #e5f1fb;
-}
+
+/* OPEN ITEMS - YELLOW */
 
 .sheet-row.status-openItems {
   background: #fff4ce;
 }
 
+
+/* POINTS POSTED - ORANGE */
+
+.sheet-row.status-pointsPosted {
+  background: #fde6d2;
+}
+
+
+/* POINTS CLEARED - TEAL */
+
+.sheet-row.status-pointsCleared {
+  background: #d9f1f2;
+}
+
+
+/* REVIEWED - BLUE */
+
+.sheet-row.status-reviewed {
+  background: #dcecf8;
+}
+
+
+/* SIGNER REVIEW - RED */
+
 .sheet-row.status-signerReview {
-  background: #fde7e9;
+  background: #fde1e3;
 }
 
 
@@ -345,7 +460,8 @@ select {
 }
 
 .sheet-row.drag-over {
-  border-top: 2px solid #0f6cbd;
+  border-top:
+    2px solid #0f6cbd;
 }
 
 
@@ -355,6 +471,8 @@ select {
 
 .sheet-button {
   min-width: 0;
+
+  width: 100%;
 
   display: flex;
   align-items: center;
@@ -384,8 +502,7 @@ select {
 /* =========================================
    ACTUAL EXCEL TAB COLOR
 
-   This square reflects the native Excel
-   bottom-tab color, NOT workflow status.
+   This square stays separate from workflow.
    ========================================= */
 
 .tab-color {
@@ -394,7 +511,10 @@ select {
 
   flex: 0 0 8px;
 
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border:
+    1px solid
+    rgba(0, 0, 0, 0.15);
+
   border-radius: 2px;
 
   background: #c8c6c4;
@@ -416,37 +536,6 @@ select {
 
 .sheet-row.active .sheet-name {
   font-weight: 600;
-}
-
-
-/* =========================================
-   WORKFLOW STATUS LABEL
-   ========================================= */
-
-.workflow-label {
-  padding-left: 8px;
-  padding-right: 2px;
-
-  white-space: nowrap;
-
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.status-prepared .workflow-label {
-  color: #107c10;
-}
-
-.status-reviewed .workflow-label {
-  color: #0f6cbd;
-}
-
-.status-openItems .workflow-label {
-  color: #8a6d00;
-}
-
-.status-signerReview .workflow-label {
-  color: #c50f1f;
 }
 
 
@@ -473,7 +562,11 @@ select {
    ========================================= */
 
 .empty-message {
-  padding: 25px 10px;
+  padding:
+    25px
+    10px
+    25px
+    22px;
 
   color: #605e5c;
 
@@ -488,9 +581,14 @@ select {
 footer {
   flex: 0 0 auto;
 
-  padding: 5px 8px;
+  padding:
+    5px
+    8px
+    5px
+    22px;
 
-  border-top: 1px solid #e1dfdd;
+  border-top:
+    1px solid #e1dfdd;
 
   background: #faf9f8;
 
@@ -509,11 +607,13 @@ footer {
 
   z-index: 1000;
 
-  min-width: 185px;
+  min-width: 190px;
 
   padding: 4px;
 
-  border: 1px solid #c8c6c4;
+  border:
+    1px solid #c8c6c4;
+
   border-radius: 4px;
 
   background: #ffffff;
@@ -562,7 +662,10 @@ footer {
 }
 
 .menu-heading {
-  padding: 5px 9px 2px;
+  padding:
+    5px
+    9px
+    2px;
 
   color: #605e5c;
 
@@ -574,7 +677,7 @@ footer {
 
 
 /* =========================================
-   WORKFLOW DOTS IN RIGHT-CLICK MENU
+   WORKFLOW DOTS
    ========================================= */
 
 .workflow-dot {
@@ -583,25 +686,57 @@ footer {
 
   flex: 0 0 10px;
 
-  border: 1px solid rgba(0, 0, 0, 0.18);
+  border:
+    1px solid
+    rgba(0, 0, 0, 0.18);
+
   border-radius: 50%;
 }
+
+
+/* PREPARED */
 
 .workflow-dot.prepared {
   background: #13a10e;
 }
 
+
+/* OPEN ITEMS */
+
+.workflow-dot.open-items {
+  background: #f9c80e;
+}
+
+
+/* POINTS POSTED */
+
+.workflow-dot.points-posted {
+  background: #f28c28;
+}
+
+
+/* POINTS CLEARED */
+
+.workflow-dot.points-cleared {
+  background: #19a7ae;
+}
+
+
+/* REVIEWED */
+
 .workflow-dot.reviewed {
   background: #0078d4;
 }
 
-.workflow-dot.open-items {
-  background: #fce100;
-}
+
+/* SIGNER REVIEW */
 
 .workflow-dot.signer-review {
   background: #e81123;
 }
+
+
+/* NO STATUS */
 
 .workflow-dot.no-status {
   background: #ffffff;
@@ -609,7 +744,7 @@ footer {
 
 
 /* =========================================
-   EXCEL-STYLE TAB COLOR PALETTE
+   TAB COLOR PALETTE
    ========================================= */
 
 .color-menu {
@@ -618,11 +753,14 @@ footer {
   z-index: 1010;
 
   width: 330px;
-  max-width: calc(100vw - 10px);
+  max-width:
+    calc(100vw - 10px);
 
   padding: 0;
 
-  border: 1px solid #c8c6c4;
+  border:
+    1px solid #c8c6c4;
+
   border-radius: 8px;
 
   background: #ffffff;
@@ -640,8 +778,6 @@ footer {
 
 .color-menu h3 {
   margin: 0 0 8px;
-
-  color: #242424;
 
   font-size: 12px;
   font-weight: 600;
@@ -670,14 +806,18 @@ footer {
 
   padding: 0;
 
-  border: 1px solid rgba(0, 0, 0, 0.16);
+  border:
+    1px solid
+    rgba(0, 0, 0, 0.16);
+
   border-radius: 50%;
 
   cursor: pointer;
 }
 
 .palette-swatch:hover {
-  outline: 2px solid #0f6cbd;
+  outline:
+    2px solid #0f6cbd;
 
   outline-offset: 1px;
 }
@@ -688,7 +828,8 @@ footer {
   padding: 10px 14px;
 
   border: 0;
-  border-top: 1px solid #e1dfdd;
+  border-top:
+    1px solid #e1dfdd;
 
   background: #ffffff;
 
@@ -721,7 +862,8 @@ footer {
 
   padding: 12px;
 
-  background: rgba(0, 0, 0, 0.28);
+  background:
+    rgba(0, 0, 0, 0.28);
 }
 
 .dialog-box {
@@ -730,7 +872,9 @@ footer {
 
   padding: 16px;
 
-  border: 1px solid #c8c6c4;
+  border:
+    1px solid #c8c6c4;
+
   border-radius: 6px;
 
   background: #ffffff;
@@ -744,7 +888,6 @@ footer {
   margin: 0 0 8px;
 
   font-size: 16px;
-  font-weight: 600;
 }
 
 .dialog-box p {
@@ -762,17 +905,10 @@ footer {
 
   padding: 7px 8px;
 
-  border: 1px solid #8a8886;
+  border:
+    1px solid #8a8886;
+
   border-radius: 3px;
-
-  outline: none;
-}
-
-.dialog-input:focus {
-  border-color: #0f6cbd;
-
-  box-shadow:
-    0 0 0 1px #0f6cbd;
 }
 
 .dialog-actions {
@@ -785,16 +921,12 @@ footer {
 .dialog-actions button {
   padding: 6px 12px;
 
-  border: 1px solid #c8c6c4;
+  border:
+    1px solid #c8c6c4;
+
   border-radius: 3px;
 
   background: #ffffff;
-
-  cursor: pointer;
-}
-
-.dialog-actions button:hover {
-  background: #f3f2f1;
 }
 
 .dialog-actions .primary-button {
@@ -815,27 +947,79 @@ footer {
 
 
 /* =========================================
-   NARROW PANE
+   RESPONSIVE NARROW PANE
 
-   When the pane gets narrow, preserve the
-   worksheet names and tab-color square.
+   Native Excel pane resizing determines the
+   actual width. Our content simply contracts.
    ========================================= */
 
-@media (max-width: 240px) {
+@media (max-width: 220px) {
 
-  .workflow-label {
-    display: none;
+  .app-header h1 {
+    font-size: 13px;
   }
 
-  .status-column {
-    display: none;
+  .control-row {
+    align-items: stretch;
+
+    flex-direction: column;
+  }
+
+  .control-row select {
+    max-width: none;
+
+    width: 100%;
   }
 
   .sheet-header,
   .sheet-row {
     grid-template-columns:
-      18px
+      14px
       minmax(0, 1fr);
+  }
+
+  .drag-handle {
+    font-size: 10px;
+  }
+
+  .tab-color {
+    width: 7px;
+    height: 7px;
+
+    flex-basis: 7px;
+  }
+
+}
+
+
+/* =========================================
+   VERY NARROW DESKTOP MODE
+   ========================================= */
+
+@media (max-width: 150px) {
+
+  .app-header {
+    padding-right: 4px;
+  }
+
+  .app-header h1 {
+    font-size: 11px;
+  }
+
+  .header-button {
+    display: none;
+  }
+
+  .controls {
+    padding-right: 4px;
+  }
+
+  .sheet-row {
+    padding-right: 3px;
+  }
+
+  footer {
+    display: none;
   }
 
 }
@@ -844,7 +1028,7 @@ footer {
 /* =========================================
    HIDDEN UI ELEMENTS
 
-   Keep this rule last.
+   KEEP LAST
    ========================================= */
 
 [hidden] {

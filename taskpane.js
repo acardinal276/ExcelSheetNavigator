@@ -1,11 +1,17 @@
 /* global Office, Excel */
 
+
+/* =========================================
+   STATE
+   ========================================= */
+
 let sheetCache = [];
 let activeSheetId = null;
 let selectedSheetId = null;
 let draggedSheetId = null;
 let handlersRegistered = false;
 let dialogResolver = null;
+let navigatorCollapsed = false;
 
 
 /* =========================================
@@ -19,31 +25,73 @@ const STATUS_KEY =
 const STATUS_LABELS = {
   none: "",
   prepared: "Prepared",
-  reviewed: "Reviewed",
   openItems: "Open Items",
+  pointsPosted: "Points Posted",
+  pointsCleared: "Points Cleared",
+  reviewed: "Reviewed",
   signerReview: "Signer Review"
 };
 
 
 /* =========================================
-   COLOR PALETTES
+   TAB COLOR PALETTES
    ========================================= */
 
 const THEME_COLORS = [
-  "#FFFFFF", "#000000", "#E7E6E1", "#203864", "#4472C4",
-  "#A64D45", "#8DAE52", "#6B5B95", "#4F9DB8", "#E69138",
+  "#FFFFFF",
+  "#000000",
+  "#E7E6E1",
+  "#203864",
+  "#4472C4",
+  "#A64D45",
+  "#8DAE52",
+  "#6B5B95",
+  "#4F9DB8",
+  "#E69138",
 
-  "#F2F2F2", "#7F7F7F", "#D9D2B6", "#BDD7EE", "#DDEBF7",
-  "#E6B8AF", "#E2EFD9", "#D9D2E9", "#DDEBF7", "#FCE4D6",
+  "#F2F2F2",
+  "#7F7F7F",
+  "#D9D2B6",
+  "#BDD7EE",
+  "#DDEBF7",
+  "#E6B8AF",
+  "#E2EFD9",
+  "#D9D2E9",
+  "#DDEBF7",
+  "#FCE4D6",
 
-  "#D9D9D9", "#595959", "#C4B78B", "#8EA9DB", "#B4C6E7",
-  "#D5A6A1", "#C6E0B4", "#B4A7D6", "#A9D8E8", "#F9CB9C",
+  "#D9D9D9",
+  "#595959",
+  "#C4B78B",
+  "#8EA9DB",
+  "#B4C6E7",
+  "#D5A6A1",
+  "#C6E0B4",
+  "#B4A7D6",
+  "#A9D8E8",
+  "#F9CB9C",
 
-  "#BFBFBF", "#3F3F3F", "#948A54", "#5B9BD5", "#8FAADC",
-  "#C98982", "#A9D18E", "#9E8BBE", "#79B4CB", "#F4B183",
+  "#BFBFBF",
+  "#3F3F3F",
+  "#948A54",
+  "#5B9BD5",
+  "#8FAADC",
+  "#C98982",
+  "#A9D18E",
+  "#9E8BBE",
+  "#79B4CB",
+  "#F4B183",
 
-  "#A6A6A6", "#262626", "#4C4524", "#244062", "#4472C4",
-  "#943634", "#6B8E23", "#60497A", "#3F8496", "#D2691E"
+  "#A6A6A6",
+  "#262626",
+  "#4C4524",
+  "#244062",
+  "#4472C4",
+  "#943634",
+  "#6B8E23",
+  "#60497A",
+  "#3F8496",
+  "#D2691E"
 ];
 
 
@@ -113,9 +161,23 @@ Office.onReady((info) => {
     );
 
 
+  document
+    .getElementById("collapseToggle")
+    .addEventListener(
+      "click",
+      toggleNavigator
+    );
+
+
   document.addEventListener(
     "click",
     handleOutsideClick
+  );
+
+
+  document.addEventListener(
+    "keydown",
+    handleKeyboard
   );
 
 
@@ -148,7 +210,7 @@ async function loadSheets() {
           context.workbook.worksheets;
 
 
-        const active =
+        const activeSheet =
           sheets.getActiveWorksheet();
 
 
@@ -158,31 +220,31 @@ async function loadSheets() {
         );
 
 
-        active.load("id");
+        activeSheet.load("id");
 
 
         await context.sync();
 
 
-        const loaded = [];
+        const loadedSheets = [];
 
 
         for (
           const sheet of sheets.items
         ) {
 
-          const props =
+          const properties =
             sheet.customProperties;
 
 
-          props.load(
+          properties.load(
             "items/key,items/value"
           );
 
 
-          loaded.push({
+          loadedSheets.push({
             sheet,
-            props
+            properties
           });
 
         }
@@ -192,20 +254,42 @@ async function loadSheets() {
 
 
         sheetCache =
-          loaded.map(
-            ({ sheet, props }) => {
+          loadedSheets.map(
+            ({
+              sheet,
+              properties
+            }) => {
 
               const metadata = {};
 
 
               for (
-                const prop of props.items
+                const property of
+                properties.items
               ) {
 
-                metadata[prop.key] =
-                  prop.value;
+                metadata[property.key] =
+                  property.value;
 
               }
+
+
+              const storedStatus =
+                metadata[STATUS_KEY] ||
+                "none";
+
+
+              const validStatus =
+                Object.prototype
+                  .hasOwnProperty
+                  .call(
+                    STATUS_LABELS,
+                    storedStatus
+                  )
+
+                  ? storedStatus
+
+                  : "none";
 
 
               return {
@@ -226,9 +310,7 @@ async function loadSheets() {
                   sheet.position,
 
                 workflowStatus:
-                  metadata[
-                    STATUS_KEY
-                  ] || "none"
+                  validStatus
 
               };
 
@@ -237,14 +319,14 @@ async function loadSheets() {
 
 
         sheetCache.sort(
-          (a, b) =>
-            a.position -
-            b.position
+          (left, right) =>
+            left.position -
+            right.position
         );
 
 
         activeSheetId =
-          active.id;
+          activeSheet.id;
 
 
         if (!handlersRegistered) {
@@ -315,7 +397,7 @@ function onWorksheetActivated(
 
 
 async function activateSheet(
-  id
+  sheetId
 ) {
 
   try {
@@ -323,10 +405,13 @@ async function activateSheet(
     await Excel.run(
       async (context) => {
 
-        context.workbook
-          .worksheets
-          .getItem(id)
-          .activate();
+        const worksheet =
+          context.workbook
+            .worksheets
+            .getItem(sheetId);
+
+
+        worksheet.activate();
 
 
         await context.sync();
@@ -336,7 +421,7 @@ async function activateSheet(
 
 
     activeSheetId =
-      id;
+      sheetId;
 
 
     renderSheets();
@@ -360,7 +445,7 @@ async function activateSheet(
 
 function renderSheets() {
 
-  const query =
+  const searchText =
     document
       .getElementById("search")
       .value
@@ -374,20 +459,20 @@ function renderSheets() {
       .checked;
 
 
-  const filter =
+  const statusFilter =
     document
       .getElementById("statusFilter")
       .value;
 
 
-  const rows =
+  const filteredSheets =
     sheetCache.filter(
       (sheet) => {
 
         const matchesSearch =
           sheet.name
             .toLowerCase()
-            .includes(query);
+            .includes(searchText);
 
 
         const matchesVisibility =
@@ -397,20 +482,12 @@ function renderSheets() {
 
 
         const matchesStatus =
-          filter === "all"
-
-          ||
-
-          (
-            filter === "none" &&
-            sheet.workflowStatus ===
-              "none"
-          )
+          statusFilter === "all"
 
           ||
 
           sheet.workflowStatus ===
-            filter;
+            statusFilter;
 
 
         return (
@@ -433,10 +510,10 @@ function renderSheets() {
 
 
   for (
-    const sheet of rows
+    const sheet of filteredSheets
   ) {
 
-    const li =
+    const listItem =
       document.createElement(
         "li"
       );
@@ -474,7 +551,7 @@ function renderSheets() {
     }
 
 
-    /* ACTIVE SHEET */
+    /* ACTIVE WORKSHEET */
 
     if (
       sheet.id ===
@@ -488,7 +565,7 @@ function renderSheets() {
     }
 
 
-    /* HIDDEN SHEET */
+    /* HIDDEN WORKSHEET */
 
     if (
       sheet.visibility !==
@@ -502,7 +579,7 @@ function renderSheets() {
     }
 
 
-    /* RIGHT CLICK */
+    /* RIGHT-CLICK MENU */
 
     row.addEventListener(
       "contextmenu",
@@ -525,46 +602,63 @@ function renderSheets() {
 
     /* DRAG HANDLE */
 
-    const drag =
+    const dragHandle =
       document.createElement(
         "span"
       );
 
 
-    drag.className =
+    dragHandle.className =
       "drag-handle";
 
 
-    drag.textContent =
+    dragHandle.textContent =
       "⋮⋮";
 
 
-    drag.title =
+    dragHandle.title =
       "Drag to reorder";
 
 
     /* WORKSHEET BUTTON */
 
-    const button =
+    const sheetButton =
       document.createElement(
         "button"
       );
 
 
-    button.className =
+    sheetButton.className =
       "sheet-button";
 
 
-    button.title =
-      sheet.name;
+    sheetButton.title =
+      buildSheetTooltip(
+        sheet
+      );
 
 
-    button.addEventListener(
+    sheetButton.addEventListener(
       "click",
       () =>
         activateSheet(
           sheet.id
         )
+    );
+
+
+    sheetButton.addEventListener(
+      "dblclick",
+      async (event) => {
+
+        event.stopPropagation();
+
+
+        await renameSheet(
+          sheet
+        );
+
+      }
     );
 
 
@@ -587,74 +681,57 @@ function renderSheets() {
 
     /* WORKSHEET NAME */
 
-    const name =
+    const sheetName =
       document.createElement(
         "span"
       );
 
 
-    name.className =
+    sheetName.className =
       "sheet-name";
 
 
-    name.textContent =
+    sheetName.textContent =
       sheet.name;
 
 
-    button.append(
+    sheetButton.append(
       tabColor,
-      name
+      sheetName
     );
 
+
+    /* HIDDEN INDICATOR */
 
     if (
       sheet.visibility !==
       "Visible"
     ) {
 
-      const hidden =
+      const hiddenLabel =
         document.createElement(
           "span"
         );
 
 
-      hidden.className =
+      hiddenLabel.className =
         "hidden-label";
 
 
-      hidden.textContent =
+      hiddenLabel.textContent =
         "H";
 
 
-      button.append(
-        hidden
+      sheetButton.append(
+        hiddenLabel
       );
 
     }
 
 
-    /* STATUS LABEL */
-
-    const workflow =
-      document.createElement(
-        "span"
-      );
-
-
-    workflow.className =
-      "workflow-label";
-
-
-    workflow.textContent =
-      STATUS_LABELS[
-        sheet.workflowStatus
-      ] || "";
-
-
     row.append(
-      drag,
-      button,
-      workflow
+      dragHandle,
+      sheetButton
     );
 
 
@@ -690,10 +767,14 @@ function renderSheets() {
     );
 
 
-    li.append(row);
+    listItem.append(
+      row
+    );
 
 
-    list.append(li);
+    list.append(
+      listItem
+    );
 
   }
 
@@ -701,13 +782,36 @@ function renderSheets() {
   document
     .getElementById("count")
     .textContent =
-      `${rows.length}/${sheetCache.length}`;
+      `${filteredSheets.length}/` +
+      `${sheetCache.length}`;
 
 
   document
     .getElementById("empty")
     .hidden =
-      rows.length !== 0;
+      filteredSheets.length !== 0;
+
+}
+
+
+/* =========================================
+   WORKSHEET TOOLTIP
+   ========================================= */
+
+function buildSheetTooltip(
+  sheet
+) {
+
+  const status =
+    STATUS_LABELS[
+      sheet.workflowStatus
+    ] || "No Status";
+
+
+  return (
+    `${sheet.name}\n` +
+    `Workflow: ${status}`
+  );
 
 }
 
@@ -720,6 +824,20 @@ async function setWorkflowStatus(
   sheet,
   newStatus
 ) {
+
+  if (
+    !Object.prototype
+      .hasOwnProperty
+      .call(
+        STATUS_LABELS,
+        newStatus
+      )
+  ) {
+
+    return;
+
+  }
+
 
   try {
 
@@ -756,6 +874,56 @@ async function setWorkflowStatus(
     showError(error);
 
   }
+
+}
+
+
+/* =========================================
+   COLLAPSE / EXPAND
+   ========================================= */
+
+function toggleNavigator() {
+
+  navigatorCollapsed =
+    !navigatorCollapsed;
+
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  const toggle =
+    document.getElementById(
+      "collapseToggle"
+    );
+
+
+  app.classList.toggle(
+    "collapsed",
+    navigatorCollapsed
+  );
+
+
+  toggle.textContent =
+    navigatorCollapsed
+      ? "›"
+      : "‹";
+
+
+  toggle.title =
+    navigatorCollapsed
+
+      ? "Expand Sheet Navigator"
+
+      : "Collapse Sheet Navigator";
+
+
+  toggle.setAttribute(
+    "aria-label",
+    toggle.title
+  );
 
 }
 
@@ -825,7 +993,7 @@ async function handleDrop(
   event.preventDefault();
 
 
-  const target =
+  const targetSheetId =
     event.currentTarget
       .dataset.sheetId;
 
@@ -838,7 +1006,8 @@ async function handleDrop(
 
   if (
     !draggedSheetId ||
-    draggedSheetId === target
+    draggedSheetId ===
+      targetSheetId
   ) {
 
     return;
@@ -848,7 +1017,7 @@ async function handleDrop(
 
   await moveSheet(
     draggedSheetId,
-    target
+    targetSheetId
   );
 
 }
@@ -869,12 +1038,15 @@ function handleDragEnd(
       ".drag-over"
     )
     .forEach(
-      element =>
+      (element) => {
+
         element
           .classList
           .remove(
             "drag-over"
-          )
+          );
+
+      }
     );
 
 
@@ -899,19 +1071,19 @@ async function moveSheet(
             .worksheets;
 
 
-        const source =
+        const sourceSheet =
           sheets.getItem(
             sourceId
           );
 
 
-        const target =
+        const targetSheet =
           sheets.getItem(
             targetId
           );
 
 
-        target.load(
+        targetSheet.load(
           "position"
         );
 
@@ -919,8 +1091,8 @@ async function moveSheet(
         await context.sync();
 
 
-        source.position =
-          target.position;
+        sourceSheet.position =
+          targetSheet.position;
 
 
         await context.sync();
@@ -946,11 +1118,11 @@ async function moveSheet(
    ========================================= */
 
 function prepareSheetMenu(
-  id
+  sheetId
 ) {
 
   selectedSheetId =
-    id;
+    sheetId;
 
 
   const menu =
@@ -961,13 +1133,15 @@ function prepareSheetMenu(
 
   const sheet =
     sheetCache.find(
-      item =>
-        item.id === id
+      (item) =>
+        item.id === sheetId
     );
 
 
   if (!sheet) {
+
     return null;
+
   }
 
 
@@ -986,6 +1160,11 @@ function prepareSheetMenu(
       : "Unhide Sheet";
 
 
+  updateWorkflowMenuSelection(
+    sheet.workflowStatus
+  );
+
+
   document
     .getElementById(
       "colorMenu"
@@ -999,19 +1178,73 @@ function prepareSheetMenu(
 }
 
 
+/* =========================================
+   SHOW CURRENT STATUS IN MENU
+   ========================================= */
+
+function updateWorkflowMenuSelection(
+  workflowStatus
+) {
+
+  document
+    .querySelectorAll(
+      '#sheetMenu ' +
+      '[data-action="workflow"]'
+    )
+    .forEach(
+      (button) => {
+
+        const isCurrent =
+          button.dataset.status ===
+          workflowStatus;
+
+
+        button.classList.toggle(
+          "current-workflow-status",
+          isCurrent
+        );
+
+
+        button.setAttribute(
+          "aria-checked",
+          String(isCurrent)
+        );
+
+      }
+    );
+
+}
+
+
+/* =========================================
+   OPEN WORKSHEET MENU
+   ========================================= */
+
 function openSheetMenuAtPoint(
   x,
   y,
-  id
+  sheetId
 ) {
 
   const menu =
-    prepareSheetMenu(id);
+    prepareSheetMenu(
+      sheetId
+    );
 
 
   if (!menu) {
+
     return;
+
   }
+
+
+  menu.style.left =
+    "5px";
+
+
+  menu.style.top =
+    "5px";
 
 
   menu.hidden =
@@ -1026,38 +1259,42 @@ function openSheetMenuAtPoint(
     menu.offsetHeight;
 
 
-  menu.style.left =
-    `${
-      Math.max(
-        5,
-        Math.min(
-          x,
-          window.innerWidth -
-            width -
-            5
-        )
+  const left =
+    Math.max(
+      5,
+      Math.min(
+        x,
+        window.innerWidth -
+          width -
+          5
       )
-    }px`;
+    );
+
+
+  const top =
+    Math.max(
+      5,
+      Math.min(
+        y,
+        window.innerHeight -
+          height -
+          5
+      )
+    );
+
+
+  menu.style.left =
+    `${left}px`;
 
 
   menu.style.top =
-    `${
-      Math.max(
-        5,
-        Math.min(
-          y,
-          window.innerHeight -
-            height -
-            5
-        )
-      )
-    }px`;
+    `${top}px`;
 
 }
 
 
 /* =========================================
-   MENU ACTIONS
+   WORKSHEET MENU ACTIONS
    ========================================= */
 
 function setupMenuActions() {
@@ -1067,7 +1304,7 @@ function setupMenuActions() {
       "#sheetMenu button"
     )
     .forEach(
-      button => {
+      (button) => {
 
         button.addEventListener(
           "click",
@@ -1078,14 +1315,16 @@ function setupMenuActions() {
 
             const sheet =
               sheetCache.find(
-                item =>
+                (item) =>
                   item.id ===
                   selectedSheetId
               );
 
 
             if (!sheet) {
+
               return;
+
             }
 
 
@@ -1093,7 +1332,7 @@ function setupMenuActions() {
               button.dataset.action;
 
 
-            /* WORKFLOW */
+            /* WORKFLOW STATUS */
 
             if (
               action === "workflow"
@@ -1120,6 +1359,7 @@ function setupMenuActions() {
             ) {
 
               openColorMenu();
+
 
               return;
 
@@ -1212,27 +1452,29 @@ async function insertSheetAfter(
 
 
   if (name === null) {
+
     return;
+
   }
 
 
   try {
 
     await Excel.run(
-      async context => {
+      async (context) => {
 
         const sheets =
           context.workbook
             .worksheets;
 
 
-        const relative =
+        const relativeSheet =
           sheets.getItem(
             sheet.id
           );
 
 
-        relative.load(
+        relativeSheet.load(
           "position"
         );
 
@@ -1240,23 +1482,25 @@ async function insertSheetAfter(
         await context.sync();
 
 
-        const cleaned =
+        const cleanedName =
           name.trim();
 
 
-        const added =
-          cleaned
+        const addedSheet =
+          cleanedName
+
             ? sheets.add(
-                cleaned
+                cleanedName
               )
+
             : sheets.add();
 
 
-        added.position =
-          relative.position + 1;
+        addedSheet.position =
+          relativeSheet.position + 1;
 
 
-        added.activate();
+        addedSheet.activate();
 
 
         await context.sync();
@@ -1288,7 +1532,7 @@ async function duplicateSheet(
   try {
 
     await Excel.run(
-      async context => {
+      async (context) => {
 
         const worksheet =
           context.workbook
@@ -1336,6 +1580,21 @@ async function deleteSheet(
   sheet
 ) {
 
+  if (
+    sheetCache.length <= 1
+  ) {
+
+    await showMessageDialog(
+      "Cannot delete sheet",
+      "Excel must contain at least one worksheet."
+    );
+
+
+    return;
+
+  }
+
+
   const confirmed =
     await showConfirmDialog(
       "Delete Sheet",
@@ -1346,14 +1605,16 @@ async function deleteSheet(
 
 
   if (!confirmed) {
+
     return;
+
   }
 
 
   try {
 
     await Excel.run(
-      async context => {
+      async (context) => {
 
         context.workbook
           .worksheets
@@ -1410,7 +1671,7 @@ async function renameSheet(
   try {
 
     await Excel.run(
-      async context => {
+      async (context) => {
 
         context.workbook
           .worksheets
@@ -1447,10 +1708,35 @@ async function toggleVisibility(
   sheet
 ) {
 
+  const visibleCount =
+    sheetCache.filter(
+      (item) =>
+        item.visibility ===
+        "Visible"
+    ).length;
+
+
+  if (
+    sheet.visibility ===
+      "Visible" &&
+    visibleCount <= 1
+  ) {
+
+    await showMessageDialog(
+      "Cannot hide sheet",
+      "Excel must have at least one visible worksheet."
+    );
+
+
+    return;
+
+  }
+
+
   try {
 
     await Excel.run(
-      async context => {
+      async (context) => {
 
         const worksheet =
           context.workbook
@@ -1514,7 +1800,7 @@ function setupColorPalette() {
     )
     .addEventListener(
       "click",
-      async event => {
+      async (event) => {
 
         event.stopPropagation();
 
@@ -1543,7 +1829,7 @@ function setupColorPalette() {
     )
     .addEventListener(
       "click",
-      event => {
+      (event) => {
 
         event.stopPropagation();
 
@@ -1581,14 +1867,18 @@ function setupColorPalette() {
 }
 
 
+/* =========================================
+   RENDER COLOR PALETTE
+   ========================================= */
+
 function renderPalette(
-  id,
+  elementId,
   colors
 ) {
 
   const host =
     document.getElementById(
-      id
+      elementId
     );
 
 
@@ -1599,27 +1889,27 @@ function renderPalette(
     const color of colors
   ) {
 
-    const button =
+    const colorButton =
       document.createElement(
         "button"
       );
 
 
-    button.className =
+    colorButton.className =
       "palette-swatch";
 
 
-    button.style.background =
+    colorButton.style.background =
       color;
 
 
-    button.title =
+    colorButton.title =
       color;
 
 
-    button.addEventListener(
+    colorButton.addEventListener(
       "click",
-      async event => {
+      async (event) => {
 
         event.stopPropagation();
 
@@ -1642,13 +1932,17 @@ function renderPalette(
 
 
     host.append(
-      button
+      colorButton
     );
 
   }
 
 }
 
+
+/* =========================================
+   RECENT COLORS
+   ========================================= */
 
 function getRecentColors() {
 
@@ -1674,11 +1968,19 @@ function rememberRecentColor(
   color
 ) {
 
+  if (!color) {
+
+    return;
+
+  }
+
+
   let recent =
     getRecentColors()
       .filter(
-        item =>
-          item !== color
+        (item) =>
+          item.toLowerCase() !==
+          color.toLowerCase()
       );
 
 
@@ -1717,39 +2019,43 @@ function renderRecentColors() {
 }
 
 
+/* =========================================
+   OPEN COLOR PALETTE
+   ========================================= */
+
 function openColorMenu() {
 
-  const parent =
+  const parentMenu =
     document.getElementById(
       "sheetMenu"
     );
 
 
-  const menu =
+  const colorMenu =
     document.getElementById(
       "colorMenu"
     );
 
 
-  const rect =
-    parent
+  const parentRect =
+    parentMenu
       .getBoundingClientRect();
 
 
-  menu.hidden =
+  colorMenu.hidden =
     false;
 
 
   const width =
-    menu.offsetWidth;
+    colorMenu.offsetWidth;
 
 
   const height =
-    menu.offsetHeight;
+    colorMenu.offsetHeight;
 
 
   let left =
-    rect.left -
+    parentRect.left -
     width -
     7;
 
@@ -1757,45 +2063,57 @@ function openColorMenu() {
   if (left < 5) {
 
     left =
-      rect.right +
-      7;
+      Math.min(
+        window.innerWidth -
+          width -
+          5,
+
+        parentRect.right +
+          7
+      );
 
   }
 
 
-  menu.style.left =
+  const top =
+    Math.max(
+      5,
+      Math.min(
+        parentRect.top,
+        window.innerHeight -
+          height -
+          5
+      )
+    );
+
+
+  colorMenu.style.left =
     `${Math.max(5, left)}px`;
 
 
-  menu.style.top =
-    `${
-      Math.max(
-        5,
-        Math.min(
-          rect.top,
-          window.innerHeight -
-            height -
-            5
-        )
-      )
-    }px`;
+  colorMenu.style.top =
+    `${top}px`;
 
 }
 
 
+/* =========================================
+   APPLY TAB COLOR
+   ========================================= */
+
 async function setTabColor(
-  id,
+  sheetId,
   color
 ) {
 
   try {
 
     await Excel.run(
-      async context => {
+      async (context) => {
 
         context.workbook
           .worksheets
-          .getItem(id)
+          .getItem(sheetId)
           .tabColor =
             color;
 
@@ -1819,7 +2137,7 @@ async function setTabColor(
 
 
 /* =========================================
-   CUSTOM DIALOG
+   CUSTOM DIALOG SETUP
    ========================================= */
 
 function setupDialog() {
@@ -1830,10 +2148,13 @@ function setupDialog() {
     )
     .addEventListener(
       "click",
-      () =>
+      () => {
+
         resolveDialog(
           null
-        )
+        );
+
+      }
     );
 
 
@@ -1860,8 +2181,70 @@ function setupDialog() {
       }
     );
 
+
+  document
+    .getElementById(
+      "dialogOverlay"
+    )
+    .addEventListener(
+      "click",
+      (event) => {
+
+        if (
+          event.target.id ===
+          "dialogOverlay"
+        ) {
+
+          resolveDialog(
+            null
+          );
+
+        }
+
+      }
+    );
+
+
+  document
+    .getElementById(
+      "dialogInput"
+    )
+    .addEventListener(
+      "keydown",
+      (event) => {
+
+        if (
+          event.key === "Enter"
+        ) {
+
+          document
+            .getElementById(
+              "dialogConfirm"
+            )
+            .click();
+
+        }
+
+
+        if (
+          event.key === "Escape"
+        ) {
+
+          resolveDialog(
+            null
+          );
+
+        }
+
+      }
+    );
+
 }
 
+
+/* =========================================
+   OPEN CUSTOM DIALOG
+   ========================================= */
 
 function openDialog(
   title,
@@ -1873,6 +2256,15 @@ function openDialog(
     danger = false
   } = {}
 ) {
+
+  if (dialogResolver) {
+
+    resolveDialog(
+      null
+    );
+
+  }
+
 
   document
     .getElementById(
@@ -1887,40 +2279,40 @@ function openDialog(
       "dialogMessage"
     )
     .textContent =
-      message;
+      message || "";
 
 
-  const field =
+  const inputElement =
     document.getElementById(
       "dialogInput"
     );
 
 
-  const confirm =
+  const confirmButton =
     document.getElementById(
       "dialogConfirm"
     );
 
 
-  field.hidden =
+  inputElement.hidden =
     !input;
 
 
-  field.value =
+  inputElement.value =
     value;
 
 
-  confirm.textContent =
+  confirmButton.textContent =
     confirmText;
 
 
-  confirm.classList.toggle(
+  confirmButton.classList.toggle(
     "danger-button",
     danger
   );
 
 
-  confirm.classList.toggle(
+  confirmButton.classList.toggle(
     "primary-button",
     !danger
   );
@@ -1939,9 +2331,9 @@ function openDialog(
     setTimeout(
       () => {
 
-        field.focus();
+        inputElement.focus();
 
-        field.select();
+        inputElement.select();
 
       },
       0
@@ -1951,7 +2343,7 @@ function openDialog(
 
 
   return new Promise(
-    resolve => {
+    (resolve) => {
 
       dialogResolver =
         resolve;
@@ -1961,6 +2353,10 @@ function openDialog(
 
 }
 
+
+/* =========================================
+   RESOLVE DIALOG
+   ========================================= */
 
 function resolveDialog(
   value
@@ -1993,10 +2389,14 @@ function resolveDialog(
 }
 
 
+/* =========================================
+   DIALOG HELPERS
+   ========================================= */
+
 function showTextDialog(
   title,
   message,
-  value
+  value = ""
 ) {
 
   return openDialog(
@@ -2004,7 +2404,8 @@ function showTextDialog(
     message,
     {
       input: true,
-      value
+      value,
+      confirmText: "OK"
     }
   );
 
@@ -2014,8 +2415,8 @@ function showTextDialog(
 function showConfirmDialog(
   title,
   message,
-  confirmText,
-  danger
+  confirmText = "OK",
+  danger = false
 ) {
 
   return openDialog(
@@ -2030,8 +2431,24 @@ function showConfirmDialog(
 }
 
 
+async function showMessageDialog(
+  title,
+  message
+) {
+
+  await openDialog(
+    title,
+    message,
+    {
+      confirmText: "OK"
+    }
+  );
+
+}
+
+
 /* =========================================
-   HELPERS
+   MENU HELPERS
    ========================================= */
 
 function handleOutsideClick(
@@ -2048,6 +2465,21 @@ function handleOutsideClick(
     !event.target.closest(
       "#colorMenu"
     )
+  ) {
+
+    closeMenus();
+
+  }
+
+}
+
+
+function handleKeyboard(
+  event
+) {
+
+  if (
+    event.key === "Escape"
   ) {
 
     closeMenus();
@@ -2077,20 +2509,24 @@ function closeMenus() {
 }
 
 
+/* =========================================
+   AUTO-SCROLL ACTIVE WORKSHEET
+   ========================================= */
+
 function scrollActiveIntoView() {
 
   requestAnimationFrame(
     () => {
 
-      const row =
+      const activeRow =
         document.querySelector(
           `.sheet-row[data-sheet-id="${activeSheetId}"]`
         );
 
 
-      if (row) {
+      if (activeRow) {
 
-        row.scrollIntoView({
+        activeRow.scrollIntoView({
           block: "nearest",
           behavior: "smooth"
         });
@@ -2103,6 +2539,10 @@ function scrollActiveIntoView() {
 }
 
 
+/* =========================================
+   ERROR / STATUS
+   ========================================= */
+
 function showError(
   error
 ) {
@@ -2114,7 +2554,7 @@ function showError(
 
   setStatus(
     error.message ||
-      "Excel operation failed.",
+    "Excel operation failed.",
     true
   );
 
@@ -2126,17 +2566,17 @@ function setStatus(
   isError = false
 ) {
 
-  const element =
+  const statusElement =
     document.getElementById(
       "status"
     );
 
 
-  element.textContent =
+  statusElement.textContent =
     message;
 
 
-  element.style.color =
+  statusElement.style.color =
     isError
       ? "#ffd7d7"
       : "";

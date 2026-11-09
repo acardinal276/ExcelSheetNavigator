@@ -25,177 +25,225 @@
 <body>
 
 
-<div class="app">
+<div
+  id="app"
+  class="app">
 
 
   <!-- =====================================
-       HEADER
+       COLLAPSE / EXPAND TOGGLE
+
+       This stays on the left edge of the
+       Sheet Navigator.
        ===================================== -->
 
-  <header class="app-header">
+  <button
+    id="collapseToggle"
+    class="collapse-toggle"
+    title="Collapse Sheet Navigator"
+    aria-label="Collapse Sheet Navigator">
 
-    <div>
+    ‹
 
-      <h1>
-        Sheet Navigator
-      </h1>
-
-      <p id="status">
-        Connecting to Excel...
-      </p>
-
-    </div>
-
-
-    <button
-      id="refresh"
-      class="header-button"
-      title="Refresh worksheets"
-      aria-label="Refresh worksheets">
-
-      ↻
-
-    </button>
-
-  </header>
+  </button>
 
 
 
   <!-- =====================================
-       SEARCH AND FILTERS
+       NAVIGATOR CONTENT
        ===================================== -->
 
-  <section class="controls">
+  <div
+    id="navigatorContent"
+    class="navigator-content">
 
 
-    <input
-      id="search"
-      class="search-box"
-      type="search"
-      placeholder="Search worksheets..."
-      aria-label="Search worksheets">
+    <!-- =====================================
+         HEADER
+         ===================================== -->
+
+    <header class="app-header">
+
+      <div>
+
+        <h1>
+          Sheet Navigator
+        </h1>
+
+        <p id="status">
+          Connecting to Excel...
+        </p>
+
+      </div>
 
 
-    <div class="control-row">
+      <button
+        id="refresh"
+        class="header-button"
+        title="Refresh worksheets"
+        aria-label="Refresh worksheets">
 
+        ↻
 
-      <label>
+      </button>
 
-        <input
-          id="showHidden"
-          type="checkbox">
-
-        Hidden
-
-      </label>
-
-
-      <select
-        id="statusFilter"
-        aria-label="Filter by workflow status">
-
-        <option value="all">
-          All Statuses
-        </option>
-
-        <option value="prepared">
-          Prepared
-        </option>
-
-        <option value="reviewed">
-          Reviewed
-        </option>
-
-        <option value="openItems">
-          Open Items
-        </option>
-
-        <option value="signerReview">
-          Signer Review
-        </option>
-
-        <option value="none">
-          No Status
-        </option>
-
-      </select>
-
-
-    </div>
-
-
-  </section>
+    </header>
 
 
 
-  <!-- =====================================
-       WORKSHEET LIST HEADER
-       ===================================== -->
+    <!-- =====================================
+         SEARCH AND FILTERS
+         ===================================== -->
 
-  <div class="sheet-header">
-
-
-    <span>
-    </span>
+    <section class="controls">
 
 
-    <span class="sheet-column">
+      <input
+        id="search"
+        class="search-box"
+        type="search"
+        placeholder="Search worksheets..."
+        aria-label="Search worksheets">
 
-      Worksheets
 
-      <span id="count">
+      <div class="control-row">
+
+
+        <label>
+
+          <input
+            id="showHidden"
+            type="checkbox">
+
+          Hidden
+
+        </label>
+
+
+        <select
+          id="statusFilter"
+          aria-label="Filter by workflow status">
+
+
+          <option value="all">
+            All Statuses
+          </option>
+
+
+          <option value="prepared">
+            Prepared
+          </option>
+
+
+          <option value="openItems">
+            Open Items
+          </option>
+
+
+          <option value="pointsPosted">
+            Points Posted
+          </option>
+
+
+          <option value="pointsCleared">
+            Points Cleared
+          </option>
+
+
+          <option value="reviewed">
+            Reviewed
+          </option>
+
+
+          <option value="signerReview">
+            Signer Review
+          </option>
+
+
+          <option value="none">
+            No Status
+          </option>
+
+
+        </select>
+
+
+      </div>
+
+
+    </section>
+
+
+
+    <!-- =====================================
+         WORKSHEET LIST HEADER
+
+         Status column intentionally removed.
+         Entire row color communicates status.
+         ===================================== -->
+
+    <div class="sheet-header">
+
+
+      <span class="drag-column">
       </span>
 
-    </span>
+
+      <span class="sheet-column">
+
+        Worksheets
+
+        <span id="count">
+        </span>
+
+      </span>
 
 
-    <span class="status-column">
-      Status
-    </span>
+    </div>
+
+
+
+    <!-- =====================================
+         SCROLLABLE WORKSHEET LIST
+         ===================================== -->
+
+    <main
+      id="sheetContainer"
+      class="sheet-container">
+
+
+      <ul id="sheetList">
+      </ul>
+
+
+      <div
+        id="empty"
+        class="empty-message"
+        hidden>
+
+        No matching worksheets
+
+      </div>
+
+
+    </main>
+
+
+
+    <!-- =====================================
+         FOOTER
+         ===================================== -->
+
+    <footer>
+
+      <span>
+        ■ = Excel tab color
+      </span>
+
+    </footer>
 
 
   </div>
-
-
-
-  <!-- =====================================
-       SCROLLABLE WORKSHEET LIST
-       ===================================== -->
-
-  <main
-    id="sheetContainer"
-    class="sheet-container">
-
-
-    <ul id="sheetList">
-    </ul>
-
-
-    <div
-      id="empty"
-      class="empty-message"
-      hidden>
-
-      No matching worksheets
-
-    </div>
-
-
-  </main>
-
-
-
-  <!-- =====================================
-       FOOTER
-       ===================================== -->
-
-  <footer>
-
-    <span>
-      ■ Actual Excel tab color
-    </span>
-
-  </footer>
 
 
 </div>
@@ -267,6 +315,10 @@
   </div>
 
 
+  <!-- =====================================
+       WORKFLOW STATUS
+       ===================================== -->
+
   <div class="menu-heading">
     Workflow Status
   </div>
@@ -288,21 +340,6 @@
 
 
 
-  <!-- REVIEWED -->
-
-  <button
-    data-action="workflow"
-    data-status="reviewed">
-
-    <span class="workflow-dot reviewed">
-    </span>
-
-    Reviewed
-
-  </button>
-
-
-
   <!-- OPEN ITEMS -->
 
   <button
@@ -313,6 +350,51 @@
     </span>
 
     Open Items
+
+  </button>
+
+
+
+  <!-- POINTS POSTED -->
+
+  <button
+    data-action="workflow"
+    data-status="pointsPosted">
+
+    <span class="workflow-dot points-posted">
+    </span>
+
+    Points Posted
+
+  </button>
+
+
+
+  <!-- POINTS CLEARED -->
+
+  <button
+    data-action="workflow"
+    data-status="pointsCleared">
+
+    <span class="workflow-dot points-cleared">
+    </span>
+
+    Points Cleared
+
+  </button>
+
+
+
+  <!-- REVIEWED -->
+
+  <button
+    data-action="workflow"
+    data-status="reviewed">
+
+    <span class="workflow-dot reviewed">
+    </span>
+
+    Reviewed
 
   </button>
 
@@ -330,6 +412,11 @@
     Signer Review
 
   </button>
+
+
+
+  <div class="menu-separator">
+  </div>
 
 
 
@@ -361,8 +448,6 @@
   hidden>
 
 
-  <!-- THEME COLORS -->
-
   <section>
 
     <h3>
@@ -377,8 +462,6 @@
   </section>
 
 
-
-  <!-- STANDARD COLORS -->
 
   <section>
 
@@ -395,8 +478,6 @@
 
 
 
-  <!-- RECENT COLORS -->
-
   <section>
 
     <h3>
@@ -412,8 +493,6 @@
 
 
 
-  <!-- NO COLOR -->
-
   <button
     id="noColor"
     class="palette-command">
@@ -423,8 +502,6 @@
   </button>
 
 
-
-  <!-- MORE COLORS -->
 
   <button
     id="moreColors"
@@ -448,7 +525,7 @@
 <!-- =====================================
      CUSTOM DIALOG
 
-     Used for Insert / Rename / Delete.
+     Used by Insert / Rename / Delete.
      ===================================== -->
 
 <div

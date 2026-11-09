@@ -23,9 +23,9 @@ select {
 }
 
 
-/* =============================
+/* =========================================
    APP
-   ============================= */
+   ========================================= */
 
 .app {
   height: 100vh;
@@ -37,16 +37,16 @@ select {
 }
 
 
-/* =============================
+/* =========================================
    HEADER
-   ============================= */
+   ========================================= */
 
 .app-header {
   flex: 0 0 auto;
 
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 
   padding: 8px 10px;
 
@@ -91,9 +91,9 @@ select {
 }
 
 
-/* =============================
-   SEARCH AND FILTERS
-   ============================= */
+/* =========================================
+   SEARCH + FILTERS
+   ========================================= */
 
 .controls {
   flex: 0 0 auto;
@@ -111,14 +111,15 @@ select {
   border: 1px solid #8a8886;
   border-radius: 3px;
 
+  background: #ffffff;
+
   outline: none;
 }
 
 .search-box:focus {
   border-color: #0f6cbd;
 
-  box-shadow:
-    0 0 0 1px #0f6cbd;
+  box-shadow: 0 0 0 1px #0f6cbd;
 }
 
 .control-row {
@@ -152,9 +153,9 @@ select {
 }
 
 
-/* =============================
+/* =========================================
    WORKSHEET COLUMN HEADER
-   ============================= */
+   ========================================= */
 
 .sheet-header {
   flex: 0 0 auto;
@@ -190,8 +191,8 @@ select {
 .sheet-column {
   overflow: hidden;
 
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 #count {
@@ -207,9 +208,9 @@ select {
 }
 
 
-/* =============================
-   SCROLLABLE AREA
-   ============================= */
+/* =========================================
+   SCROLLABLE WORKSHEET AREA
+   ========================================= */
 
 .sheet-container {
   flex: 1 1 auto;
@@ -221,9 +222,6 @@ select {
 
   scrollbar-gutter: stable;
 }
-
-
-/* SCROLLBAR */
 
 .sheet-container::-webkit-scrollbar {
   width: 9px;
@@ -241,9 +239,9 @@ select {
 }
 
 
-/* =============================
+/* =========================================
    WORKSHEET LIST
-   ============================= */
+   ========================================= */
 
 #sheetList {
   margin: 0;
@@ -253,9 +251,9 @@ select {
 }
 
 
-/* =============================
+/* =========================================
    WORKSHEET ROW
-   ============================= */
+   ========================================= */
 
 .sheet-row {
   display: grid;
@@ -286,6 +284,9 @@ select {
   background: #f3f2f1;
 }
 
+
+/* ACTIVE WORKSHEET */
+
 .sheet-row.active {
   border-left-color: #0f6cbd;
 
@@ -293,9 +294,9 @@ select {
 }
 
 
-/* =============================
+/* =========================================
    DRAG HANDLE
-   ============================= */
+   ========================================= */
 
 .drag-handle {
   color: #a19f9d;
@@ -309,10 +310,18 @@ select {
   cursor: grabbing;
 }
 
+.sheet-row.dragging {
+  opacity: 0.4;
+}
 
-/* =============================
-   WORKSHEET BUTTON
-   ============================= */
+.sheet-row.drag-over {
+  border-top: 2px solid #0f6cbd;
+}
+
+
+/* =========================================
+   WORKSHEET NAME
+   ========================================= */
 
 .sheet-button {
   min-width: 0;
@@ -341,35 +350,13 @@ select {
   color: #0f6cbd;
 }
 
-
-/* =============================
-   ACTUAL EXCEL TAB COLOR
-   ============================= */
-
-.tab-color {
-  width: 8px;
-  height: 8px;
-
-  flex: 0 0 8px;
-
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 2px;
-
-  background: #c8c6c4;
-}
-
-
-/* =============================
-   WORKSHEET NAME
-   ============================= */
-
 .sheet-name {
   min-width: 0;
 
   overflow: hidden;
 
-  text-overflow: ellipsis;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .sheet-row.active .sheet-name {
@@ -377,9 +364,26 @@ select {
 }
 
 
-/* =============================
+/* =========================================
+   ACTUAL EXCEL TAB COLOR
+   ========================================= */
+
+.tab-color {
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 2px;
+
+  background: #c8c6c4;
+}
+
+
+/* =========================================
    HIDDEN WORKSHEETS
-   ============================= */
+   ========================================= */
 
 .sheet-row.hidden-sheet {
   opacity: 0.55;
@@ -394,9 +398,9 @@ select {
 }
 
 
-/* =============================
-   SIGN-OFF BUTTONS
-   ============================= */
+/* =========================================
+   EXISTING SIGN-OFF BUTTONS
+   ========================================= */
 
 .signoff {
   width: 20px;
@@ -431,9 +435,9 @@ select {
 }
 
 
-/* =============================
-   MORE BUTTON
-   ============================= */
+/* =========================================
+   MORE MENU BUTTON
+   ========================================= */
 
 .more-button {
   width: 22px;
@@ -456,22 +460,9 @@ select {
 }
 
 
-/* =============================
-   DRAGGING
-   ============================= */
-
-.sheet-row.dragging {
-  opacity: 0.4;
-}
-
-.sheet-row.drag-over {
-  border-top: 2px solid #0f6cbd;
-}
-
-
-/* =============================
+/* =========================================
    EMPTY MESSAGE
-   ============================= */
+   ========================================= */
 
 .empty-message {
   padding: 25px 10px;
@@ -482,9 +473,9 @@ select {
 }
 
 
-/* =============================
+/* =========================================
    FOOTER
-   ============================= */
+   ========================================= */
 
 footer {
   flex: 0 0 auto;
@@ -508,9 +499,9 @@ footer {
 }
 
 
-/* =============================
+/* =========================================
    WORKSHEET CONTEXT MENU
-   ============================= */
+   ========================================= */
 
 .sheet-menu {
   position: fixed;
@@ -542,6 +533,7 @@ footer {
   border-radius: 2px;
 
   background: #ffffff;
+
   color: #242424;
 
   text-align: left;
@@ -566,85 +558,309 @@ footer {
 }
 
 
-/* =============================
-   TAB COLOR PICKER
-   ============================= */
+/* =========================================
+   EXCEL-STYLE TAB COLOR PALETTE
+   ========================================= */
 
 .color-menu {
   position: fixed;
 
   z-index: 1010;
 
-  display: flex;
-
-  gap: 5px;
-
-  padding: 5px;
-
-  border: 1px solid #c8c6c4;
-  border-radius: 4px;
-
-  background: #ffffff;
-
-  box-shadow:
-    0 4px 14px
-    rgba(0, 0, 0, 0.20);
-}
-
-.color-choice {
-  width: 21px;
-  height: 21px;
+  width: 330px;
+  max-width: calc(100vw - 10px);
 
   padding: 0;
 
-  border: 1px solid
-    rgba(0, 0, 0, 0.25);
+  border: 1px solid #c8c6c4;
+  border-radius: 10px;
 
-  border-radius: 3px;
-
-  cursor: pointer;
-}
-
-.color-choice:hover {
-  transform: scale(1.08);
-}
-
-.color-choice.red {
-  background: #c50f1f;
-}
-
-.color-choice.orange {
-  background: #f7630c;
-}
-
-.color-choice.yellow {
-  background: #fce100;
-}
-
-.color-choice.green {
-  background: #13a10e;
-}
-
-.color-choice.blue {
-  background: #0078d4;
-}
-
-.color-choice.purple {
-  background: #886ce4;
-}
-
-.color-choice.none {
   background: #ffffff;
 
-  color: #605e5c;
+  overflow: hidden;
 
+  box-shadow:
+    0 6px 20px
+    rgba(0, 0, 0, 0.22);
+}
+
+.color-menu section {
+  padding: 12px 14px;
+}
+
+.color-menu h3 {
+  margin: 0 0 10px;
+
+  color: #242424;
+
+  font-size: 13px;
   font-weight: 600;
 }
 
 
-/* =============================
+/* COLOR GRIDS */
+
+.color-grid {
+  display: grid;
+
+  gap: 7px;
+}
+
+.theme-grid {
+  grid-template-columns:
+    repeat(10, 1fr);
+}
+
+.standard-grid {
+  grid-template-columns:
+    repeat(10, 1fr);
+}
+
+.recent-grid {
+  grid-template-columns:
+    repeat(8, 1fr);
+}
+
+
+/* COLOR CIRCLES */
+
+.palette-swatch {
+  width: 22px;
+  height: 22px;
+
+  padding: 0;
+
+  border: 1px solid
+    rgba(0, 0, 0, 0.16);
+
+  border-radius: 50%;
+
+  cursor: pointer;
+}
+
+.palette-swatch:hover {
+  outline: 2px solid #0f6cbd;
+
+  outline-offset: 1px;
+}
+
+.palette-swatch.selected {
+  outline: 2px solid #107c10;
+
+  outline-offset: 2px;
+}
+
+
+/* PALETTE DIVIDER */
+
+.palette-separator {
+  height: 1px;
+
+  background: #e1dfdd;
+}
+
+
+/* NO COLOR / MORE COLORS */
+
+.palette-command {
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  width: 100%;
+
+  padding: 12px 16px;
+
+  border: 0;
+  border-top: 1px solid #e1dfdd;
+
+  background: #ffffff;
+
+  color: #605e5c;
+
+  text-align: left;
+
+  cursor: pointer;
+}
+
+.palette-command:hover {
+  background: #f3f2f1;
+}
+
+.no-color-icon {
+  width: 22px;
+  height: 22px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #605e5c;
+  border-radius: 50%;
+
+  color: #c50f1f;
+
+  font-size: 18px;
+}
+
+
+/* =========================================
+   CUSTOM DIALOG OVERLAY
+
+   Used for:
+   - Insert Sheet
+   - Rename Sheet
+   - Delete Sheet
+   ========================================= */
+
+.dialog-overlay {
+  position: fixed;
+
+  z-index: 2000;
+
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 12px;
+
+  background:
+    rgba(0, 0, 0, 0.28);
+}
+
+
+/* DIALOG */
+
+.dialog-box {
+  width: 100%;
+  max-width: 340px;
+
+  padding: 16px;
+
+  border: 1px solid #c8c6c4;
+  border-radius: 6px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 8px 26px
+    rgba(0, 0, 0, 0.25);
+}
+
+.dialog-box h2 {
+  margin: 0 0 8px;
+
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dialog-box p {
+  margin: 0 0 12px;
+
+  color: #605e5c;
+
+  font-size: 12px;
+}
+
+
+/* DIALOG TEXT FIELD */
+
+.dialog-input {
+  width: 100%;
+
+  margin-bottom: 14px;
+
+  padding: 7px 8px;
+
+  border: 1px solid #8a8886;
+  border-radius: 3px;
+
+  outline: none;
+}
+
+.dialog-input:focus {
+  border-color: #0f6cbd;
+
+  box-shadow:
+    0 0 0 1px #0f6cbd;
+}
+
+
+/* DIALOG BUTTONS */
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 8px;
+}
+
+.dialog-actions button {
+  padding: 6px 12px;
+
+  border: 1px solid #c8c6c4;
+  border-radius: 3px;
+
+  background: #ffffff;
+
+  cursor: pointer;
+}
+
+.dialog-actions button:hover {
+  background: #f3f2f1;
+}
+
+.dialog-actions .primary-button {
+  border-color: #0f6cbd;
+
+  background: #0f6cbd;
+
+  color: #ffffff;
+}
+
+.dialog-actions .primary-button:hover {
+  background: #115ea3;
+}
+
+.dialog-actions .danger-button {
+  border-color: #a4262c;
+
+  background: #a4262c;
+
+  color: #ffffff;
+}
+
+.dialog-actions .danger-button:hover {
+  background: #8e1f26;
+}
+
+
+/* =========================================
+   RESPONSIVE PALETTE
+   ========================================= */
+
+@media (max-width: 360px) {
+
+  .color-menu {
+    width: calc(100vw - 10px);
+  }
+
+  .palette-swatch {
+    width: 20px;
+    height: 20px;
+  }
+
+}
+
+
+/* =========================================
    HIDDEN UI ELEMENTS
-   ============================= */
+
+   Must remain last.
+   ========================================= */
 
 [hidden] {
   display: none !important;

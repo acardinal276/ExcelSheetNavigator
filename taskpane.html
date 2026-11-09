@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
   <meta charset="UTF-8">
@@ -66,7 +67,6 @@
 
   <section class="controls">
 
-
     <input
       id="search"
       class="search-box"
@@ -76,7 +76,6 @@
 
 
     <div class="control-row">
-
 
       <label>
 
@@ -115,9 +114,7 @@
 
       </select>
 
-
     </div>
-
 
   </section>
 
@@ -129,8 +126,7 @@
 
   <div class="sheet-header">
 
-
-    <span class="drag-column">
+    <span>
     </span>
 
 
@@ -159,9 +155,8 @@
     </span>
 
 
-    <span class="menu-column">
+    <span>
     </span>
-
 
   </div>
 
@@ -174,7 +169,6 @@
   <main
     id="sheetContainer"
     class="sheet-container">
-
 
     <ul id="sheetList">
     </ul>
@@ -189,56 +183,34 @@
 
     </div>
 
-
   </main>
 
 
 
   <!-- =====================================
-       FOOTER / LEGEND
+       FOOTER
        ===================================== -->
 
   <footer>
 
-
     <div class="legend">
 
-
       <span>
-
-        <strong>
-          P
-        </strong>
-
+        <strong>P</strong>
         Prepared
-
       </span>
 
-
       <span>
-
-        <strong>
-          R
-        </strong>
-
+        <strong>R</strong>
         Reviewed
-
       </span>
-
 
       <span>
-
-        <strong>
-          S
-        </strong>
-
+        <strong>S</strong>
         Signer
-
       </span>
-
 
     </div>
-
 
   </footer>
 
@@ -248,12 +220,7 @@
 
 
 <!-- =====================================
-     WORKSHEET MENU
-
-     This single menu is used by BOTH:
-
-     • Right-clicking a worksheet row
-     • Clicking the ⋯ button
+     WORKSHEET RIGHT-CLICK / MORE MENU
      ===================================== -->
 
 <div
@@ -318,10 +285,7 @@
 
 
 <!-- =====================================
-     EXCEL TAB COLOR PICKER
-
-     This changes the actual Excel
-     worksheet tab color.
+     EXCEL-STYLE TAB COLOR PALETTE
      ===================================== -->
 
 <div
@@ -330,56 +294,164 @@
   hidden>
 
 
+  <!-- THEME COLORS -->
+
+  <section>
+
+    <h3>
+      Theme Colors
+    </h3>
+
+
+    <div
+      id="themeColors"
+      class="color-grid theme-grid">
+    </div>
+
+  </section>
+
+
+
+  <!-- STANDARD COLORS -->
+
+  <section>
+
+    <h3>
+      Standard Colors
+    </h3>
+
+
+    <div
+      id="standardColors"
+      class="color-grid standard-grid">
+    </div>
+
+  </section>
+
+
+
+  <!-- RECENT COLORS -->
+
+  <section>
+
+    <h3>
+      Recent Colors
+    </h3>
+
+
+    <div
+      id="recentColors"
+      class="color-grid recent-grid">
+    </div>
+
+  </section>
+
+
+
+  <div class="palette-separator">
+  </div>
+
+
+
+  <!-- NO COLOR -->
+
   <button
-    class="color-choice red"
-    data-color="#C50F1F"
-    title="Red">
+    id="noColor"
+    class="palette-command">
+
+    <span class="no-color-icon">
+      ╱
+    </span>
+
+    No Color
+
   </button>
 
 
+
+  <!-- MORE COLORS -->
+
   <button
-    class="color-choice orange"
-    data-color="#F7630C"
-    title="Orange">
+    id="moreColors"
+    class="palette-command">
+
+    <span>
+      🎨
+    </span>
+
+    More Colors...
+
   </button>
 
 
-  <button
-    class="color-choice yellow"
-    data-color="#FCE100"
-    title="Yellow">
-  </button>
+  <!-- Native HTML color picker -->
+
+  <input
+    id="moreColorsInput"
+    type="color"
+    hidden>
 
 
-  <button
-    class="color-choice green"
-    data-color="#13A10E"
-    title="Green">
-  </button>
+</div>
 
 
-  <button
-    class="color-choice blue"
-    data-color="#0078D4"
-    title="Blue">
-  </button>
+
+<!-- =====================================
+     CUSTOM DIALOG
+
+     Replaces browser prompt() / confirm()
+     for Insert, Rename and Delete.
+     ===================================== -->
+
+<div
+  id="dialogOverlay"
+  class="dialog-overlay"
+  hidden>
 
 
-  <button
-    class="color-choice purple"
-    data-color="#886CE4"
-    title="Purple">
-  </button>
+  <section
+    class="dialog-box"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="dialogTitle">
 
 
-  <button
-    class="color-choice none"
-    data-color=""
-    title="Remove tab color">
+    <h2 id="dialogTitle">
+    </h2>
 
-    ×
 
-  </button>
+    <p id="dialogMessage">
+    </p>
+
+
+    <input
+      id="dialogInput"
+      class="dialog-input"
+      type="text"
+      hidden>
+
+
+    <div class="dialog-actions">
+
+
+      <button id="dialogCancel">
+        Cancel
+      </button>
+
+
+      <button
+        id="dialogConfirm"
+        class="primary-button">
+
+        OK
+
+      </button>
+
+
+    </div>
+
+
+  </section>
 
 
 </div>
@@ -395,4 +467,5 @@
 
 
 </body>
+
 </html>
